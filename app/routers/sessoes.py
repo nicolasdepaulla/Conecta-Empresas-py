@@ -1,0 +1,1 @@
+# Endpoints relacionados a sessões
