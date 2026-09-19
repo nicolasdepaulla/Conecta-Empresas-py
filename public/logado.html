@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pacotes — Conecta Empresas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F7F6F3; --ink: #1B2430; --ink-soft: #5B6472;
+    --accent: #2F6F62; --accent-dark: #22534A; --line: #DEDAD1;
+    --panel: #FFFFFF; --error: #B3432E;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: 'Inter', sans-serif; }
+
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 40px; background: var(--panel); border-bottom: 1px solid var(--line);
+  }
+  header .brand { font-family: 'Sora', sans-serif; font-weight: 600; font-size: 1.15rem; }
+  .user-area { display: flex; align-items: center; gap: 14px; }
+  .user-badge {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 0.9rem; font-weight: 500;
+  }
+  .avatar {
+    width: 30px; height: 30px; border-radius: 50%;
+    background: var(--accent); color: #fff; display: flex;
+    align-items: center; justify-content: center;
+    font-family: 'Sora', sans-serif; font-weight: 600; font-size: 0.85rem;
+  }
+  #logoutBtn {
+    border: 1px solid var(--line); background: transparent; color: var(--ink-soft);
+    padding: 6px 14px; border-radius: 4px; font-family: 'Inter', sans-serif;
+    font-size: 0.85rem; cursor: pointer;
+  }
+  #logoutBtn:hover { border-color: var(--ink-soft); color: var(--ink); }
+
+  main { max-width: 1080px; margin: 0 auto; padding: 40px 24px; }
+  main h1 { font-family: 'Sora', sans-serif; font-size: 1.6rem; margin: 0 0 6px; }
+  main .sub { color: var(--ink-soft); margin: 0 0 32px; }
+
+  .grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 18px;
+  }
+  .card {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 6px;
+    padding: 22px; display: flex; flex-direction: column; gap: 10px;
+  }
+  .card .setor {
+    font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em;
+    color: var(--accent-dark); font-weight: 600;
+  }
+  .card h3 { font-family: 'Sora', sans-serif; font-size: 1.1rem; margin: 0; }
+  .card .preco { font-size: 1.4rem; font-weight: 600; margin-top: 4px; }
+  .card .preco small { font-size: 0.8rem; font-weight: 400; color: var(--ink-soft); }
+  .card ul { margin: 8px 0 0; padding-left: 18px; color: var(--ink-soft); font-size: 0.88rem; }
+  .card ul li { margin-bottom: 4px; }
+  .card button {
+    margin-top: 12px; padding: 10px; background: var(--accent); color: #fff; border: none;
+    border-radius: 4px; font-family: 'Inter', sans-serif; font-weight: 600; font-size: 0.9rem; cursor: pointer;
+  }
+  .card button:hover { background: var(--accent-dark); }
+
+  .empty, .loading { color: var(--ink-soft); padding: 40px 0; text-align: center; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">Conecta Empresas</div>
+  <div class="user-area">
+    <div class="user-badge">
+      <div class="avatar" id="avatarInitial">?</div>
+      <span id="usernameLabel">Carregando...</span>
+    </div>
+    <button id="logoutBtn">Sair</button>
+  </div>
+</header>
+
+<main>
+  <h1>Pacotes disponíveis</h1>
+  <p class="sub">Dados de contato empresarial, organizados por setor.</p>
+  <div id="pacotesContainer" class="loading">Carregando pacotes...</div>
+</main>
+
+<script>
+async function carregarUsuario() {
+  try {
+    const res = await fetch('/get-username');
+    if (!res.ok) { window.location.href = '/login.html'; return; }
+    const data = await res.json();
+    document.getElementById('usernameLabel').textContent = data.username;
+    document.getElementById('avatarInitial').textContent = data.username.charAt(0).toUpperCase();
+  } catch (e) {
+    window.location.href = '/login.html';
+  }
+}
+
+async function carregarPacotes() {
+  const container = document.getElementById('pacotesContainer');
+  try {
+    const res = await fetch('/pacotes');
+    if (!res.ok) { container.textContent = 'Não foi possível carregar os pacotes.'; return; }
+    const pacotes = await res.json();
+
+    if (!pacotes.length) {
+      container.textContent = 'Nenhum pacote disponível no momento.';
+      return;
+    }
+
+    container.className = 'grid';
+    container.innerHTML = pacotes.map(p => `
+      <div class="card">
+        <span class="setor">${p.setor}</span>
+        <h3>${p.nome}</h3>
+        <div class="preco">R$ ${p.preco.toFixed(2)} <small>/ ${p.quantidade_contatos} contatos</small></div>
+        <ul>
+          ${p.sessao.itens.map(item => `<li>${item}</li>`).join('')}
+        </ul>
+        <button onclick="finalizarPagamento('${p.cobrar_id}')">Finalizar Pagamento</button>
+      </div>
+    `).join('');
+  } catch (e) {
+    container.textContent = 'Não foi possível conectar ao servidor.';
+  }
+}
+
+async function finalizarPagamento(cobrarId) {
+  try {
+    const res = await fetch(`/pagamentos/${cobrarId}`);
+    const data = await res.json();
+    alert(`Checkout de R$ ${data.valor?.toFixed(2) ?? '--'} — integração de pagamento em desenvolvimento.`);
+  } catch (e) {
+    alert('Não foi possível iniciar o pagamento.');
+  }
+}
+
+document.getElementById('logoutBtn').addEventListener('click', async function () {
+  await fetch('/logout', { method: 'POST' });
+  window.location.href = '/login.html';
+});
+
+carregarUsuario();
+carregarPacotes();
+</script>
+</body>
+</html>

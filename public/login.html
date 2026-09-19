@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Entrar — Conecta Empresas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F7F6F3;
+    --ink: #1B2430;
+    --ink-soft: #5B6472;
+    --accent: #2F6F62;
+    --accent-dark: #22534A;
+    --line: #DEDAD1;
+    --panel: #FFFFFF;
+    --error: #B3432E;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+  }
+  @media (max-width: 860px) {
+    body { grid-template-columns: 1fr; }
+    .side { display: none; }
+  }
+  .side {
+    background: var(--ink);
+    color: #F1EFEA;
+    padding: 56px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+    overflow: hidden;
+  }
+  .side::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+      repeating-linear-gradient(0deg, rgba(255,255,255,0.05) 0 1px, transparent 1px 64px),
+      repeating-linear-gradient(90deg, rgba(255,255,255,0.05) 0 1px, transparent 1px 64px);
+  }
+  .side .brand {
+    font-family: 'Sora', sans-serif;
+    font-weight: 600;
+    font-size: 1.25rem;
+    position: relative;
+    z-index: 1;
+  }
+  .side .pitch {
+    position: relative;
+    z-index: 1;
+    max-width: 380px;
+  }
+  .side .pitch h1 {
+    font-family: 'Sora', sans-serif;
+    font-size: 2rem;
+    line-height: 1.25;
+    font-weight: 600;
+    margin: 0 0 16px;
+  }
+  .side .pitch p {
+    color: #C7C2B8;
+    line-height: 1.6;
+    margin: 0;
+  }
+  .side .setores {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .side .setores span {
+    font-size: 0.8rem;
+    padding: 6px 12px;
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 3px;
+    color: #D8D4CB;
+  }
+  .form-area {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 24px;
+  }
+  .form-card {
+    width: 100%;
+    max-width: 380px;
+  }
+  .form-card h2 {
+    font-family: 'Sora', sans-serif;
+    font-size: 1.6rem;
+    font-weight: 600;
+    margin: 0 0 8px;
+  }
+  .form-card .sub {
+    color: var(--ink-soft);
+    margin: 0 0 32px;
+    font-size: 0.95rem;
+  }
+  label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-bottom: 6px;
+    margin-top: 18px;
+  }
+  input {
+    width: 100%;
+    padding: 11px 12px;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: var(--panel);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.95rem;
+    color: var(--ink);
+  }
+  input:focus {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+    border-color: var(--accent);
+  }
+  button.primary {
+    width: 100%;
+    margin-top: 28px;
+    padding: 12px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+  button.primary:hover { background: var(--accent-dark); }
+  button.primary:disabled { background: var(--ink-soft); cursor: not-allowed; }
+  .foot {
+    margin-top: 24px;
+    font-size: 0.88rem;
+    color: var(--ink-soft);
+  }
+  .foot a { color: var(--accent-dark); font-weight: 500; text-decoration: none; }
+  .foot a:hover { text-decoration: underline; }
+  .msg {
+    margin-top: 18px;
+    padding: 10px 12px;
+    border-radius: 4px;
+    font-size: 0.88rem;
+    display: none;
+  }
+  .msg.error { display: block; background: #F7E7E2; color: var(--error); border: 1px solid #E9C3B7; }
+</style>
+</head>
+<body>
+
+  <div class="side">
+    <div class="brand">Conecta Empresas</div>
+    <div class="pitch">
+      <h1>Dados de contato empresarial, organizados por setor.</h1>
+      <p>Telefone, e-mail corporativo e CNPJ prontos para prospecção — sem planilha solta, sem dado desatualizado.</p>
+    </div>
+    <div class="setores">
+      <span>Imobiliário</span>
+      <span>Automotivo</span>
+      <span>Agro</span>
+      <span>Tecnologia</span>
+      <span>Construção</span>
+      <span>Beleza</span>
+    </div>
+  </div>
+
+  <div class="form-area">
+    <div class="form-card">
+      <h2>Entrar</h2>
+      <p class="sub">Acesse sua conta para ver os pacotes disponíveis.</p>
+
+      <form id="loginForm">
+        <label for="username">Usuário</label>
+        <input type="text" id="username" name="username" required autocomplete="username">
+
+        <label for="password">Senha</label>
+        <input type="password" id="password" name="password" required autocomplete="current-password">
+
+        <div class="msg error" id="errorMsg"></div>
+
+        <button type="submit" class="primary" id="submitBtn">Entrar</button>
+      </form>
+
+      <p class="foot">Ainda não tem conta? <a href="/cadastro.html">Criar conta</a></p>
+    </div>
+  </div>
+
+<script>
+document.getElementById('loginForm').addEventListener('submit', async function (e) {
+  e.preventDefault();
+  const btn = document.getElementById('submitBtn');
+  const errorBox = document.getElementById('errorMsg');
+  errorBox.style.display = 'none';
+  btn.disabled = true;
+  btn.textContent = 'Entrando...';
+
+  const username = document.getElementById('username').value;
+  const password = document.getElementById('password').value;
+
+  try {
+    const response = await fetch('/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+
+    if (response.ok) {
+      window.location.href = '/logado.html';
+    } else {
+      const data = await response.json().catch(() => ({}));
+      errorBox.textContent = data.detail || 'Usuário ou senha inválidos.';
+      errorBox.style.display = 'block';
+    }
+  } catch (err) {
+    errorBox.textContent = 'Não foi possível conectar ao servidor.';
+    errorBox.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Entrar';
+  }
+});
+</script>
+</body>
+</html>
