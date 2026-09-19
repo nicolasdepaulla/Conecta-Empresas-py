@@ -120,7 +120,7 @@ async function carregarPacotes() {
         <ul>
           ${p.sessao.itens.map(item => `<li>${item}</li>`).join('')}
         </ul>
-        <button onclick="finalizarPagamento('${p.cobrar_id}')">Finalizar Pagamento</button>
+        <button onclick="finalizarPagamento('${p.slug}')">Finalizar Pagamento</button>
       </div>
     `).join('');
   } catch (e) {
@@ -128,11 +128,15 @@ async function carregarPacotes() {
   }
 }
 
-async function finalizarPagamento(cobrarId) {
+async function finalizarPagamento(slugPacote) {
   try {
-    const res = await fetch(`/pagamentos/${cobrarId}`);
+    const res = await fetch(`/pagamentos/checkout/${slugPacote}`, { method: 'POST' });
     const data = await res.json();
-    alert(`Checkout de R$ ${data.valor?.toFixed(2) ?? '--'} — integração de pagamento em desenvolvimento.`);
+    if (data.checkout_url) {
+      window.location.href = data.checkout_url;
+    } else {
+      alert('Pedido criado, mas não foi possível obter o link de pagamento.');
+    }
   } catch (e) {
     alert('Não foi possível iniciar o pagamento.');
   }
