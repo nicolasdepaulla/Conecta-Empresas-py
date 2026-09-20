@@ -2,6 +2,8 @@
 Integração com o Checkout Pro do Mercado Pago via API de Preferences.
 Docs: https://www.mercadopago.com.br/developers/pt/docs/checkout-pro/landing
 """
+import hmac
+import hashlib
 import httpx
 from fastapi import HTTPException
 from app.core.config import settings
@@ -36,6 +38,8 @@ async def criar_ordem_de_pagamento(pedido_id: str, valor: float, descricao: str)
         ],
         "external_reference": pedido_id,
     }
+    if settings.public_base_url:
+        payload["notification_url"] = f"{settings.public_base_url.rstrip('/')}/pagamentos/webhook"
 
     async with httpx.AsyncClient(timeout=15.0) as client:
         resposta = await client.post(PREFERENCES_URL, headers=headers, json=payload)
@@ -79,3 +83,40 @@ async def buscar_pagamento_por_id(payment_id: str) -> dict:
         raise HTTPException(status_code=502, detail="Não foi possível consultar o pagamento no Mercado Pago.")
 
     return resposta.json()
+
+
+def validar_assinatura_webhook(x_signature: str | None, x_request_id: str | None, data_id: str | None) -> bool:
+    """
+    Valida a assinatura que o Mercado Pago envia no header 'x-signature' das
+    notificações de webhook, evitando que qualquer um chame nosso endpoint
+    fingindo ser o Mercado Pago.
+
+    Formato do header: "ts=1704908010,v1=<hash_hmac_sha256>"
+    Manifest assinado: "id:{data.id};request-id:{x-request-id};ts:{ts};"
+    Docs: https://www.mercadopago.com.br/developers/pt/docs/checkout-pro/additional-content/notifications/webhooks
+    """
+    if not settings.payment_provider_webhook_secret:
+        # Sem segredo configurado ainda (ex.: primeiros testes em sandbox) -> não bloqueia.
+        return True
+
+    if not x_signature or not data_id:
+        return False
+
+    partes = dict(item.split("=", 1) for item in x_signature.split(",") if "=" in item)
+    ts = partes.get("ts")
+    v1_recebido = partes.get("v1")
+    if not ts or not v1_recebido:
+        return False
+
+    manifest = f"id:{data_id.lower()};"
+    if x_request_id:
+        manifest += f"request-id:{x_request_id};"
+    manifest += f"ts:{ts};"
+
+    v1_calculado = hmac.new(
+        settings.payment_provider_webhook_secret.encode(),
+        manifest.encode(),
+        hashlib.sha256,
+    ).hexdigest()
+
+    return hmac.compare_digest(v1_calculado, v1_recebido)

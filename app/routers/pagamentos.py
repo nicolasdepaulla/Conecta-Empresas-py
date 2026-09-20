@@ -1,16 +1,11 @@
-from fastapi import APIRouter, Depends
+import logging
+from fastapi import APIRouter, Depends, Request, HTTPException
 from app.core.deps import get_current_user
-from app.services import pedido_service
+from app.services import pedido_service, mercadopago_service
+
+logger = logging.getLogger("conecta.webhook")
 
 router = APIRouter(prefix="/pagamentos", tags=["pagamentos"])
-
-TABELA_PRECOS = {"100": 100.00, "110": 110.00, "120": 120.00, "130": 130.00, "140": 1000.00}
-
-
-@router.get("/{cobrar_id}")
-async def obter_cobranca(cobrar_id: str, usuario: dict = Depends(get_current_user)):
-    valor = TABELA_PRECOS.get(cobrar_id)
-    return {"cobrar_id": cobrar_id, "valor": valor, "status": "aguardando_integracao"}
 
 
 @router.post("/checkout/{slug_pacote}")
@@ -20,12 +15,14 @@ async def iniciar_checkout(slug_pacote: str, usuario: dict = Depends(get_current
 
 
 @router.post("/webhook")
-async def webhook_pagamento(payload: dict):
+async def webhook_pagamento(payload: dict, request: Request):
     """
     Endpoint chamado pelo Mercado Pago quando o status de um pagamento muda.
     Para o Checkout Pro (Preferences), a notificação vem no formato:
     {"type": "payment", "data": {"id": "<payment_id>"}}
     """
+    logger.info("Webhook recebido: %s", payload)
+
     if payload.get("type") != "payment":
         return {"ignored": True, "reason": "evento não é de pagamento"}
 
@@ -33,7 +30,18 @@ async def webhook_pagamento(payload: dict):
     if not payment_id:
         return {"ignored": True, "reason": "payload sem data.id"}
 
-    return await pedido_service.confirmar_pagamento_por_id(payment_id)
+    assinatura_valida = mercadopago_service.validar_assinatura_webhook(
+        x_signature=request.headers.get("x-signature"),
+        x_request_id=request.headers.get("x-request-id"),
+        data_id=str(payment_id),
+    )
+    if not assinatura_valida:
+        logger.warning("Webhook com assinatura inválida recebido (payment_id=%s)", payment_id)
+        raise HTTPException(status_code=401, detail="Assinatura do webhook inválida.")
+
+    resultado = await pedido_service.confirmar_pagamento_por_id(payment_id)
+    logger.info("Pedido atualizado via webhook: %s", resultado)
+    return resultado
 
 
 @router.get("/pedidos/meus")
