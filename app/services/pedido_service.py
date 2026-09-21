@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 from fastapi import HTTPException
-from app.repositories import pedido_repository, pacote_repository
+from app.repositories import pedido_repository, pacote_repository, usuario_repository
 from app.services import mercadopago_service
 
 
@@ -9,6 +9,9 @@ async def criar_pedido_para_checkout(username: str, slug_pacote: str) -> dict:
     pacote = await pacote_repository.buscar_por_slug(slug_pacote)
     if not pacote:
         raise HTTPException(status_code=404, detail="Pacote não encontrado.")
+
+    usuario = await usuario_repository.buscar_por_username(username)
+    email_comprador = usuario.get("email") if usuario else None
 
     pedido = {
         "username": username,
@@ -21,7 +24,10 @@ async def criar_pedido_para_checkout(username: str, slug_pacote: str) -> dict:
     pedido_id = await pedido_repository.criar_pedido(pedido)
 
     cobranca = await mercadopago_service.criar_ordem_de_pagamento(
-        pedido_id=pedido_id, valor=pacote["preco"], descricao=pacote["nome"]
+        pedido_id=pedido_id,
+        valor=pacote["preco"],
+        descricao=pacote["nome"],
+        email_comprador=email_comprador,
     )
 
     return {
@@ -53,4 +59,7 @@ async def confirmar_pagamento_por_id(payment_id: str):
 
 
 async def historico_do_usuario(username: str):
-    return await pedido_repository.listar_por_usuario(username)
+    pedidos = await pedido_repository.listar_por_usuario(username)
+    for p in pedidos:
+        p["_id"] = str(p["_id"])
+    return pedidos

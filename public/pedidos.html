@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meus Pedidos — Conecta Empresas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F7F6F3; --ink: #1B2430; --ink-soft: #5B6472;
+    --accent: #2F6F62; --line: #DEDAD1; --panel: #FFFFFF;
+    --pendente: #B08A2E; --pago: #2F6F62; --cancelado: #B3432E;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: 'Inter', sans-serif; }
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 40px; background: var(--panel); border-bottom: 1px solid var(--line);
+  }
+  header .brand { font-family: 'Sora', sans-serif; font-weight: 600; font-size: 1.15rem; }
+  header nav a { color: var(--ink-soft); text-decoration: none; font-size: 0.9rem; margin-left: 20px; }
+  header nav a:hover { color: var(--ink); }
+  main { max-width: 780px; margin: 0 auto; padding: 40px 24px; }
+  main h1 { font-family: 'Sora', sans-serif; font-size: 1.6rem; margin: 0 0 6px; }
+  main .sub { color: var(--ink-soft); margin: 0 0 32px; }
+  table { width: 100%; border-collapse: collapse; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+  th, td { text-align: left; padding: 12px 16px; font-size: 0.9rem; border-bottom: 1px solid var(--line); }
+  th { color: var(--ink-soft); font-weight: 500; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.03em; }
+  tr:last-child td { border-bottom: none; }
+  .badge { padding: 3px 10px; border-radius: 12px; font-size: 0.78rem; font-weight: 600; color: #fff; }
+  .badge.pendente { background: var(--pendente); }
+  .badge.pago { background: var(--pago); }
+  .badge.cancelado { background: var(--cancelado); }
+  .empty, .loading { color: var(--ink-soft); padding: 40px 0; text-align: center; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">Conecta Empresas</div>
+  <nav>
+    <a href="/logado.html">Pacotes</a>
+    <a href="/pedidos.html">Meus Pedidos</a>
+  </nav>
+</header>
+
+<main>
+  <h1>Meus pedidos</h1>
+  <p class="sub">Histórico das suas compras.</p>
+  <div id="pedidosContainer" class="loading">Carregando...</div>
+</main>
+
+<script>
+async function carregarPedidos() {
+  const container = document.getElementById('pedidosContainer');
+  try {
+    const res = await fetch('/pagamentos/pedidos/meus');
+    if (!res.ok) { window.location.href = '/login.html'; return; }
+    const pedidos = await res.json();
+
+    if (!pedidos.length) {
+      container.textContent = 'Você ainda não fez nenhum pedido.';
+      return;
+    }
+
+    const linhas = pedidos.map(p => {
+      const data = new Date(p.criado_em).toLocaleDateString('pt-BR');
+      return `
+        <tr>
+          <td>${p.pacote_nome}</td>
+          <td>R$ ${p.valor.toFixed(2)}</td>
+          <td>${data}</td>
+          <td><span class="badge ${p.status}">${p.status}</span></td>
+        </tr>
+      `;
+    }).join('');
+
+    container.outerHTML = `
+      <table id="pedidosContainer">
+        <thead>
+          <tr><th>Pacote</th><th>Valor</th><th>Data</th><th>Status</th></tr>
+        </thead>
+        <tbody>${linhas}</tbody>
+      </table>
+    `;
+  } catch (e) {
+    container.textContent = 'Não foi possível carregar seus pedidos.';
+  }
+}
+
+carregarPedidos();
+</script>
+</body>
+</html>
