@@ -11,9 +11,14 @@ def mock_repository(monkeypatch):
     mocks = {
         "buscar_por_username": AsyncMock(return_value=None),
         "criar_usuario": AsyncMock(return_value=None),
+        "buscar_por_email": AsyncMock(return_value=None),
+        "salvar_token_redefinicao": AsyncMock(return_value=None),
+        "buscar_por_token_redefinicao": AsyncMock(return_value=None),
+        "atualizar_senha": AsyncMock(return_value=None),
     }
     for nome, mock in mocks.items():
         monkeypatch.setattr(usuario_service.usuario_repository, nome, mock)
+    monkeypatch.setattr(usuario_service, "enviar_email_redefinicao_senha", lambda *a, **k: None)
     return mocks
 
 
@@ -67,3 +72,57 @@ async def test_autenticar_rejeita_usuario_inexistente(mock_repository):
         await usuario_service.autenticar("naoexiste", "qualquersenha")
 
     assert exc.value.status_code == 401
+
+
+async def test_solicitar_redefinicao_gera_token_quando_email_existe(mock_repository):
+    mock_repository["buscar_por_email"].return_value = {"username": "nick", "email": "nick@teste.com"}
+
+    resultado = await usuario_service.solicitar_redefinicao_senha("nick@teste.com")
+
+    assert resultado["success"] is True
+    mock_repository["salvar_token_redefinicao"].assert_awaited_once()
+
+
+async def test_solicitar_redefinicao_nao_falha_com_email_inexistente(mock_repository):
+    mock_repository["buscar_por_email"].return_value = None
+
+    resultado = await usuario_service.solicitar_redefinicao_senha("naoexiste@teste.com")
+
+    # Sempre retorna sucesso, exista o e-mail ou não (evita vazar quais e-mails têm conta)
+    assert resultado["success"] is True
+    mock_repository["salvar_token_redefinicao"].assert_not_awaited()
+
+
+async def test_redefinir_senha_com_token_valido(mock_repository):
+    from datetime import datetime, timedelta, timezone
+    mock_repository["buscar_por_token_redefinicao"].return_value = {
+        "username": "nick",
+        "reset_token_expira": datetime.now(timezone.utc) + timedelta(minutes=10),
+    }
+
+    resultado = await usuario_service.redefinir_senha("token-valido", "novasenha123")
+
+    assert resultado["success"] is True
+    mock_repository["atualizar_senha"].assert_awaited_once()
+
+
+async def test_redefinir_senha_com_token_inexistente(mock_repository):
+    mock_repository["buscar_por_token_redefinicao"].return_value = None
+
+    with pytest.raises(HTTPException) as exc:
+        await usuario_service.redefinir_senha("token-invalido", "novasenha123")
+
+    assert exc.value.status_code == 400
+
+
+async def test_redefinir_senha_com_token_expirado(mock_repository):
+    from datetime import datetime, timedelta, timezone
+    mock_repository["buscar_por_token_redefinicao"].return_value = {
+        "username": "nick",
+        "reset_token_expira": datetime.now(timezone.utc) - timedelta(minutes=5),
+    }
+
+    with pytest.raises(HTTPException) as exc:
+        await usuario_service.redefinir_senha("token-expirado", "novasenha123")
+
+    assert exc.value.status_code == 400

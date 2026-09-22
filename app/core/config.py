@@ -12,10 +12,17 @@ class Settings(BaseSettings):
     payment_provider_api_key: str = ""
     payment_provider_webhook_secret: str = ""
 
-    # URL pública do backend (ex.: a gerada pelo ngrok) usada como notification_url
-    # nas preferências do Mercado Pago. Deixe vazio para não enviar notification_url
-    # (o Mercado Pago então usa a configurada no painel de Webhooks, se houver).
-    public_base_url: str = ""
+    # URL pública onde a aplicação está acessível (ex.: link do ngrok em
+    # desenvolvimento). Usada para montar links absolutos, como o de
+    # redefinição de senha enviado por e-mail.
+    public_base_url: str = "http://localhost:8000"
+
+    # E-mail (SMTP do Gmail) -- usado para o "esqueci minha senha"
+    smtp_host: str = "smtp.gmail.com"
+    smtp_port: int = 587
+    smtp_user: str = ""
+    smtp_password: str = ""
+    smtp_from_email: str = ""
 
     class Config:
         env_file = ".env"

@@ -1,5 +1,9 @@
 from fastapi import HTTPException
+import secrets
+from datetime import datetime, timedelta, timezone
 from app.core.security import hash_password, verify_password, create_access_token
+from app.core.email import enviar_email_redefinicao_senha
+from app.core.config import settings
 from app.repositories import usuario_repository
 
 
@@ -20,3 +24,35 @@ async def autenticar(username: str, password: str) -> str:
         raise HTTPException(status_code=401, detail="Usuário ou senha inválidos.")
 
     return create_access_token(usuario["username"])
+
+
+async def solicitar_redefinicao_senha(email: str):
+    """
+    Por segurança, essa função sempre retorna sucesso, exista ou não o
+    e-mail cadastrado -- assim não dá pra usar essa rota pra descobrir quais
+    e-mails têm conta no sistema.
+    """
+    usuario = await usuario_repository.buscar_por_email(email)
+    if usuario:
+        token = secrets.token_urlsafe(32)
+        expira_em = datetime.now(timezone.utc) + timedelta(minutes=30)
+        await usuario_repository.salvar_token_redefinicao(usuario["username"], token, expira_em)
+
+        link = f"{settings.public_base_url.rstrip('/')}/redefinir-senha.html?token={token}"
+        enviar_email_redefinicao_senha(email, link)
+
+    return {"success": True, "message": "Se o e-mail existir, um link de redefinição foi enviado."}
+
+
+async def redefinir_senha(token: str, nova_senha: str):
+    usuario = await usuario_repository.buscar_por_token_redefinicao(token)
+    if not usuario:
+        raise HTTPException(status_code=400, detail="Link inválido ou expirado.")
+
+    expira_em = usuario.get("reset_token_expira")
+    if not expira_em or datetime.now(timezone.utc) > expira_em.replace(tzinfo=timezone.utc):
+        raise HTTPException(status_code=400, detail="Link inválido ou expirado.")
+
+    nova_senha_hash = hash_password(nova_senha)
+    await usuario_repository.atualizar_senha(usuario["username"], nova_senha_hash)
+    return {"success": True, "message": "Senha redefinida com sucesso."}

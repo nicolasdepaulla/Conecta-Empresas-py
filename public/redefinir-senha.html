@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Redefinir senha — Conecta Empresas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F7F6F3; --ink: #1B2430; --ink-soft: #5B6472;
+    --accent: #2F6F62; --accent-dark: #22534A; --line: #DEDAD1;
+    --panel: #FFFFFF; --error: #B3432E; --ok: #2F6F62;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink); font-family: 'Inter', sans-serif;
+    min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px;
+  }
+  .form-card { width: 100%; max-width: 380px; }
+  .form-card h2 { font-family: 'Sora', sans-serif; font-size: 1.6rem; font-weight: 600; margin: 0 0 8px; }
+  .form-card .sub { color: var(--ink-soft); margin: 0 0 32px; font-size: 0.95rem; }
+  label { display: block; font-size: 0.85rem; font-weight: 500; margin-bottom: 6px; margin-top: 18px; }
+  input {
+    width: 100%; padding: 11px 12px; border: 1px solid var(--line); border-radius: 4px;
+    background: var(--panel); font-family: 'Inter', sans-serif; font-size: 0.95rem; color: var(--ink);
+  }
+  input:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
+  button.primary {
+    width: 100%; margin-top: 24px; padding: 12px; background: var(--accent); color: #fff;
+    border: none; border-radius: 4px; font-family: 'Inter', sans-serif; font-weight: 600;
+    font-size: 0.95rem; cursor: pointer;
+  }
+  button.primary:hover { background: var(--accent-dark); }
+  button.primary:disabled { background: var(--ink-soft); cursor: not-allowed; }
+  .foot { margin-top: 24px; font-size: 0.88rem; color: var(--ink-soft); }
+  .foot a { color: var(--accent-dark); font-weight: 500; text-decoration: none; }
+  .msg { margin-top: 18px; padding: 10px 12px; border-radius: 4px; font-size: 0.88rem; display: none; }
+  .msg.error { display: block; background: #F7E7E2; color: var(--error); border: 1px solid #E9C3B7; }
+  .msg.ok { display: block; background: #E7F0EC; color: var(--ok); border: 1px solid #BFD8CD; }
+</style>
+</head>
+<body>
+  <div class="form-card">
+    <h2>Redefinir senha</h2>
+    <p class="sub">Digite sua nova senha.</p>
+
+    <form id="redefinirForm">
+      <label for="novaSenha">Nova senha</label>
+      <input type="password" id="novaSenha" required minlength="6" autocomplete="new-password">
+
+      <label for="confirmarSenha">Confirmar nova senha</label>
+      <input type="password" id="confirmarSenha" required minlength="6" autocomplete="new-password">
+
+      <div class="msg error" id="errorMsg"></div>
+      <div class="msg ok" id="okMsg"></div>
+
+      <button type="submit" class="primary" id="submitBtn">Redefinir senha</button>
+    </form>
+
+    <p class="foot"><a href="/login.html">Voltar para o login</a></p>
+  </div>
+
+<script>
+const params = new URLSearchParams(window.location.search);
+const token = params.get('token');
+
+document.getElementById('redefinirForm').addEventListener('submit', async function (e) {
+  e.preventDefault();
+  const btn = document.getElementById('submitBtn');
+  const errorBox = document.getElementById('errorMsg');
+  const okBox = document.getElementById('okMsg');
+  errorBox.style.display = 'none';
+  okBox.style.display = 'none';
+
+  const novaSenha = document.getElementById('novaSenha').value;
+  const confirmarSenha = document.getElementById('confirmarSenha').value;
+
+  if (novaSenha !== confirmarSenha) {
+    errorBox.textContent = 'As senhas não coincidem.';
+    errorBox.style.display = 'block';
+    return;
+  }
+
+  if (!token) {
+    errorBox.textContent = 'Link inválido — falta o token de redefinição.';
+    errorBox.style.display = 'block';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Redefinindo...';
+
+  try {
+    const response = await fetch('/redefinir-senha', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, nova_senha: novaSenha })
+    });
+
+    if (response.ok) {
+      okBox.textContent = 'Senha redefinida! Redirecionando para o login...';
+      okBox.style.display = 'block';
+      setTimeout(() => { window.location.href = '/login.html'; }, 1500);
+    } else {
+      const data = await response.json().catch(() => ({}));
+      errorBox.textContent = data.detail || 'Não foi possível redefinir a senha.';
+      errorBox.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Redefinir senha';
+    }
+  } catch (err) {
+    errorBox.textContent = 'Não foi possível conectar ao servidor.';
+    errorBox.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'Redefinir senha';
+  }
+});
+</script>
+</body>
+</html>

@@ -11,3 +11,25 @@ async def criar_usuario(username: str, email: str, hashed_password: str):
         "email": email,
         "password": hashed_password,
     })
+
+
+async def buscar_por_email(email: str):
+    return await usuarios_collection.find_one({"email": email})
+
+
+async def salvar_token_redefinicao(username: str, token: str, expira_em):
+    await usuarios_collection.update_one(
+        {"username": username},
+        {"$set": {"reset_token": token, "reset_token_expira": expira_em}},
+    )
+
+
+async def buscar_por_token_redefinicao(token: str):
+    return await usuarios_collection.find_one({"reset_token": token})
+
+
+async def atualizar_senha(username: str, nova_senha_hash: str):
+    await usuarios_collection.update_one(
+        {"username": username},
+        {"$set": {"password": nova_senha_hash}, "$unset": {"reset_token": "", "reset_token_expira": ""}},
+    )
