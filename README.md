@@ -51,9 +51,27 @@ A documentação interativa da API fica disponível em `http://localhost:8000/do
 - [x] Autenticação (JWT + bcrypt, cookie httpOnly)
 - [x] Listagem/consulta de pacotes com sessão resolvida via `$lookup`
 - [x] Script de seed com os dados reais migrados do projeto original
-- [ ] Migração do front-end (páginas estáticas do projeto original)
-- [ ] Integração de pagamento real (Mercado Pago/Pagar.me/Asaas)
-- [ ] Testes automatizados
+- [x] Migração do front-end (login, cadastro, listagem de pacotes, meus pedidos)
+- [x] Integração de pagamento real (Mercado Pago Checkout Pro)
+- [x] Testes automatizados
+
+## Testes automatizados
+
+Os testes usam `pytest` + `pytest-asyncio` e não dependem de um MongoDB real
+nem do Mercado Pago de verdade — toda chamada externa é simulada, então
+rodam rápido e sem precisar de `.env` configurado.
+
+```bash
+pip install -r requirements-dev.txt
+pytest -v
+```
+
+Cobrem: hash de senha e JWT, cadastro/login (usuário duplicado, senha errada),
+criação de checkout, e a lógica do webhook de pagamento (aprovado, rejeitado,
+pendente) — essa última parte é a mais importante, porque o checkout do
+Mercado Pago em sandbox tem travado no navegador (problema conhecido de
+cookies de terceiros), então os testes automatizados são o que garante que a
+lógica de confirmação de pagamento está correta.
 
 ## Correções feitas em relação ao projeto original
 
