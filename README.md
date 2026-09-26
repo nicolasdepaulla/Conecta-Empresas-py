@@ -1,5 +1,7 @@
 # Conecta Empresas — API
 
+![Testes](https://github.com/nicolasdepaulla/Conecta-Empresas-py/actions/workflows/tests.yml/badge.svg)
+
 Sistema de venda de pacotes de dados personalizados para consórcios, com foco em setores como imobiliário, automotivo e turismo. Este repositório contém o backend, reescrito em Python como evolução de uma versão anterior em Node.js, com arquitetura em camadas e modelagem de dados otimizada para evitar duplicação de conteúdo entre pacotes.
 
 ## Stack

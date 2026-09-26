@@ -1,0 +1,33 @@
+name: Testes
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  testes:
+    runs-on: ubuntu-latest
+
+    env:
+      # Valores fake -- os testes usam mocks e nunca conectam de verdade no
+      # Mongo ou no Mercado Pago, mas o Settings (pydantic) exige que essas
+      # variáveis existam para a aplicação conseguir ser importada.
+      MONGO_URI: mongodb://localhost:27017
+      JWT_SECRET_KEY: chave-de-teste-usada-apenas-no-ci
+
+    steps:
+      - name: Baixar o código
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalar dependências
+        run: pip install -r requirements-dev.txt
+
+      - name: Rodar os testes
+        run: pytest -v
