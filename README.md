@@ -42,6 +42,21 @@ uvicorn app.main:app --reload
 
 A documentação interativa da API fica disponível em `http://localhost:8000/docs`.
 
+## Rodando com Docker
+
+Sobe a API e um MongoDB juntos, sem precisar instalar Python nem Mongo na máquina:
+
+```bash
+cp .env.example .env   # preencher JWT_SECRET_KEY (o MONGO_URI é sobrescrito automaticamente)
+docker compose up --build
+```
+
+A API fica em `http://localhost:8000`. Os dados do Mongo persistem entre reinicializações (volume `mongo_data`). Para popular os pacotes:
+
+```bash
+docker compose exec api python -m scripts.seed
+```
+
 ## Status do projeto
 
 🚧 Em desenvolvimento — migração ativa do backend original em Node.js/Express para Python/FastAPI.
@@ -56,6 +71,12 @@ A documentação interativa da API fica disponível em `http://localhost:8000/do
 - [x] Migração do front-end (login, cadastro, listagem de pacotes, meus pedidos)
 - [x] Integração de pagamento real (Mercado Pago Checkout Pro)
 - [x] Testes automatizados
+- [x] CI (GitHub Actions rodando os testes a cada push)
+- [x] Dockerização (Dockerfile + docker-compose com Mongo)
+- [x] Redefinição de senha por e-mail
+- [ ] Rate limiting (login e redefinição de senha)
+- [ ] Dashboard administrativo de vendas
+- [ ] Deploy documentado (AWS/staging)
 
 ## Testes automatizados
 
