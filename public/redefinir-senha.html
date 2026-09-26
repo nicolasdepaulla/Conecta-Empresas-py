@@ -37,6 +37,13 @@
   .foot a { color: var(--accent-dark); font-weight: 500; text-decoration: none; }
   .msg { margin-top: 18px; padding: 10px 12px; border-radius: 4px; font-size: 0.88rem; display: none; }
   .msg.error { display: block; background: #F7E7E2; color: var(--error); border: 1px solid #E9C3B7; }
+  .password-field { position: relative; }
+  .password-field input { padding-right: 40px; }
+  .toggle-password {
+    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+    background: none; border: none; cursor: pointer; font-size: 1.1rem;
+    color: var(--ink-soft); padding: 0; line-height: 1;
+  }
   .msg.ok { display: block; background: #E7F0EC; color: var(--ok); border: 1px solid #BFD8CD; }
 </style>
 </head>
@@ -47,10 +54,16 @@
 
     <form id="redefinirForm">
       <label for="novaSenha">Nova senha</label>
-      <input type="password" id="novaSenha" required minlength="6" autocomplete="new-password">
+      <div class="password-field">
+        <input type="password" id="novaSenha" required minlength="6" autocomplete="new-password">
+        <button type="button" class="toggle-password" onclick="alternarVisibilidadeSenha('novaSenha', this)">👁</button>
+      </div>
 
       <label for="confirmarSenha">Confirmar nova senha</label>
-      <input type="password" id="confirmarSenha" required minlength="6" autocomplete="new-password">
+      <div class="password-field">
+        <input type="password" id="confirmarSenha" required minlength="6" autocomplete="new-password">
+        <button type="button" class="toggle-password" onclick="alternarVisibilidadeSenha('confirmarSenha', this)">👁</button>
+      </div>
 
       <div class="msg error" id="errorMsg"></div>
       <div class="msg ok" id="okMsg"></div>
@@ -62,6 +75,13 @@
   </div>
 
 <script>
+function alternarVisibilidadeSenha(inputId, botao) {
+  const input = document.getElementById(inputId);
+  const mostrando = input.type === 'text';
+  input.type = mostrando ? 'password' : 'text';
+  botao.textContent = mostrando ? '👁' : '🙈';
+}
+
 const params = new URLSearchParams(window.location.search);
 const token = params.get('token');
 

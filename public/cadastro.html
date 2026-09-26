@@ -1,67 +1,256 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Criar conta — Conecta Empresas</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --bg: #F7F6F3; --ink: #1B2430; --ink-soft: #5B6472;
-    --accent: #2F6F62; --accent-dark: #22534A; --line: #DEDAD1;
-    --panel: #FFFFFF; --error: #B3432E; --ok: #2F6F62;
-  }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0; background: var(--bg); color: var(--ink);
-    font-family: 'Inter', sans-serif; min-height: 100vh;
-    display: grid; grid-template-columns: 1.1fr 1fr;
-  }
-  @media (max-width: 860px) { body { grid-template-columns: 1fr; } .side { display: none; } }
-  .side {
-    background: var(--ink); color: #F1EFEA; padding: 56px;
-    display: flex; flex-direction: column; justify-content: space-between;
-    position: relative; overflow: hidden;
-  }
-  .side::before {
-    content: ""; position: absolute; inset: 0;
-    background-image:
-      repeating-linear-gradient(0deg, rgba(255,255,255,0.05) 0 1px, transparent 1px 64px),
-      repeating-linear-gradient(90deg, rgba(255,255,255,0.05) 0 1px, transparent 1px 64px);
-  }
-  .side .brand { font-family: 'Sora', sans-serif; font-weight: 600; font-size: 1.25rem; position: relative; z-index: 1; }
-  .side .pitch { position: relative; z-index: 1; max-width: 380px; }
-  .side .pitch h1 { font-family: 'Sora', sans-serif; font-size: 2rem; line-height: 1.25; font-weight: 600; margin: 0 0 16px; }
-  .side .pitch p { color: #C7C2B8; line-height: 1.6; margin: 0; }
-  .side .setores { position: relative; z-index: 1; display: flex; flex-wrap: wrap; gap: 8px; }
-  .side .setores span { font-size: 0.8rem; padding: 6px 12px; border: 1px solid rgba(255,255,255,0.2); border-radius: 3px; color: #D8D4CB; }
-  .form-area { display: flex; align-items: center; justify-content: center; padding: 40px 24px; }
-  .form-card { width: 100%; max-width: 380px; }
-  .form-card h2 { font-family: 'Sora', sans-serif; font-size: 1.6rem; font-weight: 600; margin: 0 0 8px; }
-  .form-card .sub { color: var(--ink-soft); margin: 0 0 32px; font-size: 0.95rem; }
-  label { display: block; font-size: 0.85rem; font-weight: 500; margin-bottom: 6px; margin-top: 18px; }
-  input {
-    width: 100%; padding: 11px 12px; border: 1px solid var(--line); border-radius: 4px;
-    background: var(--panel); font-family: 'Inter', sans-serif; font-size: 0.95rem; color: var(--ink);
-  }
-  input:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
-  button.primary {
-    width: 100%; margin-top: 28px; padding: 12px; background: var(--accent); color: #fff;
-    border: none; border-radius: 4px; font-family: 'Inter', sans-serif; font-weight: 600;
-    font-size: 0.95rem; cursor: pointer; transition: background 0.15s ease;
-  }
-  button.primary:hover { background: var(--accent-dark); }
-  button.primary:disabled { background: var(--ink-soft); cursor: not-allowed; }
-  .foot { margin-top: 24px; font-size: 0.88rem; color: var(--ink-soft); }
-  .foot a { color: var(--accent-dark); font-weight: 500; text-decoration: none; }
-  .foot a:hover { text-decoration: underline; }
-  .msg { margin-top: 18px; padding: 10px 12px; border-radius: 4px; font-size: 0.88rem; display: none; }
-  .msg.error { display: block; background: #F7E7E2; color: var(--error); border: 1px solid #E9C3B7; }
-  .msg.ok { display: block; background: #E7F0EC; color: var(--ok); border: 1px solid #BFD8CD; }
-  .hint { font-size: 0.78rem; color: var(--ink-soft); margin-top: 4px; }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Criar conta — Conecta Empresas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=Inter:wght@400;500;600&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg: #F7F6F3;
+      --ink: #1B2430;
+      --ink-soft: #5B6472;
+      --accent: #2F6F62;
+      --accent-dark: #22534A;
+      --line: #DEDAD1;
+      --panel: #FFFFFF;
+      --error: #B3432E;
+      --ok: #2F6F62;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 1.1fr 1fr;
+    }
+
+    @media (max-width: 860px) {
+      body {
+        grid-template-columns: 1fr;
+      }
+
+      .side {
+        display: none;
+      }
+    }
+
+    .side {
+      background: var(--ink);
+      color: #F1EFEA;
+      padding: 56px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .side::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image:
+        repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.05) 0 1px, transparent 1px 64px),
+        repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0 1px, transparent 1px 64px);
+    }
+
+    .side .brand {
+      font-family: 'Sora', sans-serif;
+      font-weight: 600;
+      font-size: 1.25rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .side .pitch {
+      position: relative;
+      z-index: 1;
+      max-width: 380px;
+    }
+
+    .side .pitch h1 {
+      font-family: 'Sora', sans-serif;
+      font-size: 2rem;
+      line-height: 1.25;
+      font-weight: 600;
+      margin: 0 0 16px;
+    }
+
+    .side .pitch p {
+      color: #C7C2B8;
+      line-height: 1.6;
+      margin: 0;
+    }
+
+    .side .setores {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .side .setores span {
+      font-size: 0.8rem;
+      padding: 6px 12px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 3px;
+      color: #D8D4CB;
+    }
+
+    .form-area {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 24px;
+    }
+
+    .form-card {
+      width: 100%;
+      max-width: 380px;
+    }
+
+    .form-card h2 {
+      font-family: 'Sora', sans-serif;
+      font-size: 1.6rem;
+      font-weight: 600;
+      margin: 0 0 8px;
+    }
+
+    .form-card .sub {
+      color: var(--ink-soft);
+      margin: 0 0 32px;
+      font-size: 0.95rem;
+    }
+
+    label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 500;
+      margin-bottom: 6px;
+      margin-top: 18px;
+    }
+
+    input {
+      width: 100%;
+      padding: 11px 12px;
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      background: var(--panel);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.95rem;
+      color: var(--ink);
+    }
+
+    input:focus {
+      outline: 2px solid var(--accent);
+      outline-offset: 1px;
+      border-color: var(--accent);
+    }
+
+    button.primary {
+      width: 100%;
+      margin-top: 28px;
+      padding: 12px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+
+    button.primary:hover {
+      background: var(--accent-dark);
+    }
+
+    button.primary:disabled {
+      background: var(--ink-soft);
+      cursor: not-allowed;
+    }
+
+    .foot {
+      margin-top: 24px;
+      font-size: 0.88rem;
+      color: var(--ink-soft);
+    }
+
+    .foot a {
+      color: var(--accent-dark);
+      font-weight: 500;
+      text-decoration: none;
+    }
+
+    .foot a:hover {
+      text-decoration: underline;
+    }
+
+    .msg {
+      margin-top: 18px;
+      padding: 10px 12px;
+      border-radius: 4px;
+      font-size: 0.88rem;
+      display: none;
+    }
+
+    .msg.error {
+      display: block;
+      background: #F7E7E2;
+      color: var(--error);
+      border: 1px solid #E9C3B7;
+    }
+
+    .password-field {
+      position: relative;
+    }
+
+    .password-field input {
+      padding-right: 40px;
+    }
+
+    .toggle-password {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 1.1rem;
+      color: var(--ink-soft);
+      padding: 0;
+      line-height: 1;
+    }
+
+    .msg.ok {
+      display: block;
+      background: #E7F0EC;
+      color: var(--ok);
+      border: 1px solid #BFD8CD;
+    }
+
+    .hint {
+      font-size: 0.78rem;
+      color: var(--ink-soft);
+      margin-top: 4px;
+    }
+  </style>
 </head>
+
 <body>
   <div class="side">
     <div class="brand">Conecta Empresas</div>
@@ -88,7 +277,11 @@
         <input type="email" id="email" name="email" required autocomplete="email">
 
         <label for="password">Senha</label>
-        <input type="password" id="password" name="password" required minlength="6" autocomplete="new-password">
+        <div class="password-field">
+          <input type="password" id="password" name="password" required minlength="6" autocomplete="new-password">
+          <button type="button" class="toggle-password"
+            onclick="alternarVisibilidadeSenha('password', this)">👁</button>
+        </div>
         <div class="hint">Mínimo de 6 caracteres.</div>
 
         <div class="msg error" id="errorMsg"></div>
@@ -101,48 +294,57 @@
     </div>
   </div>
 
-<script>
-document.getElementById('cadastroForm').addEventListener('submit', async function (e) {
-  e.preventDefault();
-  const btn = document.getElementById('submitBtn');
-  const errorBox = document.getElementById('errorMsg');
-  const okBox = document.getElementById('okMsg');
-  errorBox.style.display = 'none';
-  okBox.style.display = 'none';
-  btn.disabled = true;
-  btn.textContent = 'Criando...';
-
-  const payload = {
-    username: document.getElementById('username').value,
-    email: document.getElementById('email').value,
-    password: document.getElementById('password').value,
-  };
-
-  try {
-    const response = await fetch('/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-
-    if (response.ok) {
-      okBox.textContent = 'Conta criada! Redirecionando para o login...';
-      okBox.style.display = 'block';
-      setTimeout(() => { window.location.href = '/login.html'; }, 1200);
-    } else {
-      const data = await response.json().catch(() => ({}));
-      errorBox.textContent = data.detail || 'Não foi possível criar a conta.';
-      errorBox.style.display = 'block';
-      btn.disabled = false;
-      btn.textContent = 'Criar conta';
+  <script>
+    function alternarVisibilidadeSenha(inputId, botao) {
+      const input = document.getElementById(inputId);
+      const mostrando = input.type === 'text';
+      input.type = mostrando ? 'password' : 'text';
+      botao.textContent = mostrando ? '👁' : '🙈';
     }
-  } catch (err) {
-    errorBox.textContent = 'Não foi possível conectar ao servidor.';
-    errorBox.style.display = 'block';
-    btn.disabled = false;
-    btn.textContent = 'Criar conta';
-  }
-});
-</script>
+
+
+    document.getElementById('cadastroForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const btn = document.getElementById('submitBtn');
+      const errorBox = document.getElementById('errorMsg');
+      const okBox = document.getElementById('okMsg');
+      errorBox.style.display = 'none';
+      okBox.style.display = 'none';
+      btn.disabled = true;
+      btn.textContent = 'Criando...';
+
+      const payload = {
+        username: document.getElementById('username').value,
+        email: document.getElementById('email').value,
+        password: document.getElementById('password').value,
+      };
+
+      try {
+        const response = await fetch('/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (response.ok) {
+          okBox.textContent = 'Conta criada! Redirecionando para o login...';
+          okBox.style.display = 'block';
+          setTimeout(() => { window.location.href = '/login.html'; }, 1200);
+        } else {
+          const data = await response.json().catch(() => ({}));
+          errorBox.textContent = data.detail || 'Não foi possível criar a conta.';
+          errorBox.style.display = 'block';
+          btn.disabled = false;
+          btn.textContent = 'Criar conta';
+        }
+      } catch (err) {
+        errorBox.textContent = 'Não foi possível conectar ao servidor.';
+        errorBox.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Criar conta';
+      }
+    });
+  </script>
 </body>
+
 </html>
