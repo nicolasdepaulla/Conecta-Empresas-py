@@ -74,7 +74,7 @@ docker compose exec api python -m scripts.seed
 - [x] CI (GitHub Actions rodando os testes a cada push)
 - [x] Dockerização (Dockerfile + docker-compose com Mongo)
 - [x] Redefinição de senha por e-mail
-- [ ] Rate limiting (login e redefinição de senha)
+- [x] Rate limiting (login e redefinição de senha)
 - [ ] Dashboard administrativo de vendas
 - [ ] Deploy documentado (AWS/staging)
 
@@ -95,6 +95,32 @@ pendente) — essa última parte é a mais importante, porque o checkout do
 Mercado Pago em sandbox tem travado no navegador (problema conhecido de
 cookies de terceiros), então os testes automatizados são o que garante que a
 lógica de confirmação de pagamento está correta.
+
+## Logs
+
+A aplicação usa o módulo `logging` do Python em vez de `print()`, com um logger
+por módulo (`conecta.usuarios`, `conecta.email`, `conecta.webhook`), no mesmo
+padrão do restante do projeto.
+
+O nível de log é controlado pela variável `AMBIENTE` (ver `.env.example`):
+
+- `AMBIENTE=development` (padrão) → nível `DEBUG`, mostra tudo, incluindo o
+  `[EMAIL SIMULADO]` com o link de redefinição de senha no console, já que
+  sem SMTP configurado é assim que você pega o link pra testar.
+- `AMBIENTE=production` → nível `INFO`, menos verboso. **Nesse modo, se o
+  SMTP não estiver configurado, o link de redefinição (que contém o token)
+  nunca é logado** — em vez disso, sai um `ERROR` avisando que o e-mail não
+  foi enviado, sem expor o segredo. Ou seja: se você esquecer de configurar
+  o SMTP em produção, o sistema falha de forma visível, mas segura.
+
+Nenhum log da aplicação inclui token de redefinição de senha ou senha em
+texto puro — os logs de autenticação/redefinição de senha registram só o
+`username` e o resultado da operação (encontrado/expirado/sucesso).
+
+`scripts/seed.py` continua usando `print()` de propósito: é um script de CLI
+rodado manualmente (`python -m scripts.seed`), não um componente do
+servidor, então a saída no terminal é o comportamento esperado, não um log
+de aplicação.
 
 ## Correções feitas em relação ao projeto original
 

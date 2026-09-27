@@ -1,15 +1,32 @@
 """Envio de e-mails via SMTP (Gmail). Usado para redefinição de senha."""
+import logging
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from app.core.config import settings
 
+logger = logging.getLogger("conecta.email")
+
 
 def enviar_email_redefinicao_senha(destinatario: str, link_redefinicao: str) -> None:
     if not settings.smtp_user or not settings.smtp_password:
+        if settings.is_production:
+            # Em produção, nunca loga o link (ele contém o token de reset) --
+            # SMTP não configurado ali é um erro de configuração real, não
+            # algo pra simular silenciosamente como em desenvolvimento.
+            logger.error(
+                "SMTP não configurado em produção -- e-mail de redefinição de senha NÃO enviado para %s",
+                destinatario,
+            )
+            return
+
         # Em desenvolvimento, sem SMTP configurado, só loga o link no console
         # em vez de falhar -- assim dá pra testar o fluxo sem e-mail real.
-        print(f"[EMAIL SIMULADO] Link de redefinição de senha para {destinatario}: {link_redefinicao}")
+        logger.info(
+            "[EMAIL SIMULADO] Link de redefinição de senha para %s: %s",
+            destinatario,
+            link_redefinicao,
+        )
         return
 
     mensagem = MIMEMultipart("alternative")

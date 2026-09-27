@@ -6,10 +6,15 @@ from slowapi.errors import RateLimitExceeded
 from slowapi import _rate_limit_exceeded_handler
 from app.core.limiter import limiter
 from app.core.database import garantir_indices
+from app.core.config import settings
 
-# Garante que os logs de INFO (ex.: notificações do webhook do Mercado Pago)
-# apareçam no terminal enquanto o servidor roda com uvicorn.
-logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(message)s")
+# Em desenvolvimento os logs saem em DEBUG (mostra tudo, útil pra investigar
+# bugs); em produção sobem pra INFO, pra não poluir/registrar informação
+# demais. Controlado pela variável AMBIENTE.
+logging.basicConfig(
+    level=logging.INFO if settings.is_production else logging.DEBUG,
+    format="%(asctime)s [%(name)s] %(levelname)s %(message)s",
+)
 
 app = FastAPI(title="Conecta Empresas API")
 

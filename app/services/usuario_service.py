@@ -1,11 +1,14 @@
 from fastapi import HTTPException
 import secrets
+import logging
 from datetime import datetime, timedelta, timezone
 from pymongo.errors import DuplicateKeyError
 from app.core.security import hash_password, verify_password, create_access_token
 from app.core.email import enviar_email_redefinicao_senha
 from app.core.config import settings
 from app.repositories import usuario_repository
+
+logger = logging.getLogger("conecta.usuarios")
 
 
 async def registrar(username: str, email: str, password: str):
@@ -58,19 +61,17 @@ async def solicitar_redefinicao_senha(email: str):
 
 async def redefinir_senha(token: str, nova_senha: str):
     usuario = await usuario_repository.buscar_por_token_redefinicao(token)
-    print(f"[DEBUG] token recebido: {token}")
-    print(f"[DEBUG] usuario encontrado: {usuario is not None}")
+    logger.debug("Redefinição de senha: usuário encontrado=%s", usuario is not None)
     if not usuario:
         raise HTTPException(status_code=400, detail="Link inválido ou expirado.")
 
     expira_em = usuario.get("reset_token_expira")
     agora = datetime.now(timezone.utc)
-    print(f"[DEBUG] expira_em (bruto do banco): {expira_em!r}, tzinfo={getattr(expira_em, 'tzinfo', None)}")
-    print(f"[DEBUG] agora (utc): {agora!r}")
     if not expira_em or agora > expira_em.replace(tzinfo=timezone.utc):
-        print("[DEBUG] considerado expirado -> vai barrar")
+        logger.info("Tentativa de redefinição com token expirado (usuário=%s)", usuario["username"])
         raise HTTPException(status_code=400, detail="Link inválido ou expirado.")
 
     nova_senha_hash = hash_password(nova_senha)
     await usuario_repository.atualizar_senha(usuario["username"], nova_senha_hash)
+    logger.info("Senha redefinida com sucesso (usuário=%s)", usuario["username"])
     return {"success": True, "message": "Senha redefinida com sucesso."}
