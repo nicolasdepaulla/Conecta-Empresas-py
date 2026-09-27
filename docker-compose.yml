@@ -19,6 +19,7 @@ services:
       - "27017:27017"
     volumes:
       - mongo_data:/data/db
+      - ./backups:/backups
     healthcheck:
       test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
       interval: 5s

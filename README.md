@@ -122,6 +122,64 @@ rodado manualmente (`python -m scripts.seed`), não um componente do
 servidor, então a saída no terminal é o comportamento esperado, não um log
 de aplicação.
 
+## Backup e restore
+
+O banco roda em Docker com um volume nomeado (`mongo_data`), o que já protege
+contra perder dados ao recriar os containers -- mas não contra corrupção,
+exclusão acidental (ex.: um `docker compose down -v` sem querer) ou perda do
+próprio host. Por isso existe um backup lógico separado, via `mongodump`.
+
+**Estratégia:** `mongodump`/`mongorestore` rodando dentro do próprio
+container `mongo`, gravando em `/backups` -- pasta montada em `./backups` no
+host (fica de fora do Git, propositalmente, no `.gitignore`). A mesma
+estratégia funciona sem mudança nenhuma quando o projeto for pro AWS: só
+muda pra onde os arquivos de backup são copiados depois de gerados (ver
+abaixo).
+
+### Fazer um backup
+
+```powershell
+.\scripts\backup.ps1
+```
+
+Gera `backups/backup_<nome-do-banco>_<data>_<hora>.gz` e apaga
+automaticamente backups mais antigos além da retenção (padrão: mantém os 14
+mais recentes -- ajustável com `.\scripts\backup.ps1 -Retencao 30`).
+
+### Restaurar um backup
+
+Por padrão, restaura num banco de **teste** (`<nome>_restore_test`), sem
+tocar nos dados reais -- é assim que se valida que um backup é restaurável:
+
+```powershell
+.\scripts\restore.ps1 -Arquivo backup_conecta_empresas_20260927_140000.gz
+```
+
+Só mexe no banco de verdade com a flag explícita `-Producao` (pede
+confirmação digitada antes de sobrescrever):
+
+```powershell
+.\scripts\restore.ps1 -Arquivo backup_conecta_empresas_20260927_140000.gz -Producao
+```
+
+### Frequência e retenção (recomendado para produção/AWS)
+
+Em desenvolvimento local, backup é manual, sob demanda (ex.: antes de testar
+algo arriscado). **Quando o deploy na AWS acontecer**, a recomendação é:
+
+- **Frequência:** 1 backup completo por dia (fora do horário de pico), via
+  cron/Task Scheduler do servidor chamando o mesmo `mongodump` usado aqui.
+- **Retenção:** 7 backups diários + 4 semanais (ou seguindo a política de
+  lifecycle do S3, se os backups forem enviados pra lá) -- suficiente pra
+  cobrir "percebi o problema alguns dias depois" sem acumular custo de
+  armazenamento indefinidamente.
+- **Armazenamento fora da máquina:** copiar cada `.gz` gerado pra um bucket
+  S3 (ou similar) logo após o `mongodump` -- um backup que mora só no mesmo
+  disco do banco não protege contra falha do disco/servidor inteiro. Isso
+  ainda não está implementado (depende da infraestrutura AWS, que é o
+  próximo item do roadmap); os scripts atuais já deixam o `.gz` pronto pra
+  esse próximo passo só adicionar o upload.
+
 ## Correções feitas em relação ao projeto original
 
 - Removida credencial de banco de dados exposta no código-fonte

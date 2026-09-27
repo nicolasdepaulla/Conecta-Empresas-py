@@ -4,6 +4,9 @@ venv/
 __pycache__/
 *.pyc
 
+# Backups locais do MongoDB (mongodump) -- nunca commitar dado real
+backups/
+
 # Editor / SO
 .vscode/
 .idea/
