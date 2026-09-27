@@ -46,11 +46,17 @@ async def solicitar_redefinicao_senha(email: str):
 
 async def redefinir_senha(token: str, nova_senha: str):
     usuario = await usuario_repository.buscar_por_token_redefinicao(token)
+    print(f"[DEBUG] token recebido: {token}")
+    print(f"[DEBUG] usuario encontrado: {usuario is not None}")
     if not usuario:
         raise HTTPException(status_code=400, detail="Link inválido ou expirado.")
 
     expira_em = usuario.get("reset_token_expira")
-    if not expira_em or datetime.now(timezone.utc) > expira_em.replace(tzinfo=timezone.utc):
+    agora = datetime.now(timezone.utc)
+    print(f"[DEBUG] expira_em (bruto do banco): {expira_em!r}, tzinfo={getattr(expira_em, 'tzinfo', None)}")
+    print(f"[DEBUG] agora (utc): {agora!r}")
+    if not expira_em or agora > expira_em.replace(tzinfo=timezone.utc):
+        print("[DEBUG] considerado expirado -> vai barrar")
         raise HTTPException(status_code=400, detail="Link inválido ou expirado.")
 
     nova_senha_hash = hash_password(nova_senha)
