@@ -4,6 +4,7 @@ from app.models.senha import SolicitarRedefinicaoSenha, RedefinirSenha
 from app.services import usuario_service
 from app.core.deps import get_current_user
 from app.core.limiter import limiter
+from app.core.config import settings
 
 router = APIRouter(tags=["usuarios"])
 
@@ -19,7 +20,11 @@ async def register(request: Request, dados: UsuarioCadastro):
 async def login(request: Request, dados: UsuarioLogin, response: Response):
     token = await usuario_service.autenticar(dados.username, dados.password)
     response.set_cookie(
-        key="authToken", value=token, httponly=True, secure=False, max_age=3600
+        key="authToken",
+        value=token,
+        httponly=True,
+        secure=settings.is_production,
+        max_age=3600,
     )
     return {"success": True, "message": "Login realizado com sucesso."}
 

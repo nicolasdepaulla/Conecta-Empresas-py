@@ -2,6 +2,10 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
+    # "development" ou "production" -- controla comportamentos sensíveis ao
+    # ambiente, como o atributo `secure` do cookie de autenticação.
+    ambiente: str = "development"
+
     mongo_uri: str
     mongo_db_name: str = "conecta_empresas"
 
@@ -26,6 +30,10 @@ class Settings(BaseSettings):
 
     class Config:
         env_file = ".env"
+
+    @property
+    def is_production(self) -> bool:
+        return self.ambiente.lower() == "production"
 
 
 settings = Settings()

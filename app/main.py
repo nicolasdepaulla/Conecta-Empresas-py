@@ -5,6 +5,7 @@ from app.routers import usuarios, pacotes, pagamentos
 from slowapi.errors import RateLimitExceeded
 from slowapi import _rate_limit_exceeded_handler
 from app.core.limiter import limiter
+from app.core.database import garantir_indices
 
 # Garante que os logs de INFO (ex.: notificações do webhook do Mercado Pago)
 # apareçam no terminal enquanto o servidor roda com uvicorn.
@@ -17,6 +18,12 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.include_router(usuarios.router)
 app.include_router(pacotes.router)
 app.include_router(pagamentos.router)
+
+
+@app.on_event("startup")
+async def on_startup():
+    await garantir_indices()
+
 
 # Serve o front-end (equivalente ao express.static('public') do projeto original)
 app.mount("/", StaticFiles(directory="public", html=True), name="public")
