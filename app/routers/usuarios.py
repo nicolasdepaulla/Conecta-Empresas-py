@@ -2,6 +2,7 @@ from fastapi import APIRouter, Response, Depends, Request
 from app.models.usuario import UsuarioCadastro, UsuarioLogin
 from app.models.senha import SolicitarRedefinicaoSenha, RedefinirSenha
 from app.services import usuario_service
+from app.repositories import usuario_repository
 from app.core.deps import get_current_user
 from app.core.limiter import limiter
 from app.core.config import settings
@@ -37,7 +38,15 @@ async def logout(response: Response):
 
 @router.get("/get-username")
 async def get_username(usuario: dict = Depends(get_current_user)):
-    return {"username": usuario["username"]}
+    """
+    Além do username, informa se o usuário é admin -- usado pelo front-end
+    pra decidir se mostra o link do dashboard administrativo.
+    """
+    usuario_db = await usuario_repository.buscar_por_username(usuario["username"])
+    return {
+        "username": usuario["username"],
+        "is_admin": bool(usuario_db and usuario_db.get("is_admin")),
+    }
 
 
 @router.post("/esqueci-senha")

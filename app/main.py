@@ -1,7 +1,7 @@
 import logging
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-from app.routers import usuarios, pacotes, pagamentos
+from app.routers import usuarios, pacotes, pagamentos, admin
 from slowapi.errors import RateLimitExceeded
 from slowapi import _rate_limit_exceeded_handler
 from app.core.limiter import limiter
@@ -23,6 +23,7 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.include_router(usuarios.router)
 app.include_router(pacotes.router)
 app.include_router(pagamentos.router)
+app.include_router(admin.router)
 
 
 @app.on_event("startup")

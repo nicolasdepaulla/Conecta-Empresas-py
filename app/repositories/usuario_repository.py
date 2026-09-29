@@ -33,3 +33,10 @@ async def atualizar_senha(username: str, nova_senha_hash: str):
         {"username": username},
         {"$set": {"password": nova_senha_hash}, "$unset": {"reset_token": "", "reset_token_expira": ""}},
     )
+
+
+async def marcar_como_admin(username: str):
+    await usuarios_collection.update_one(
+        {"username": username},
+        {"$set": {"is_admin": True}},
+    )

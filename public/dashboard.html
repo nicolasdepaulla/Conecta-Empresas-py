@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — Conecta Empresas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #F7F6F3; --ink: #1B2430; --ink-soft: #5B6472;
+    --accent: #2F6F62; --accent-dark: #22534A; --line: #DEDAD1; --panel: #FFFFFF;
+    --pendente: #B08A2E; --pago: #2F6F62; --cancelado: #B3432E;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: 'Inter', sans-serif; }
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 40px; background: var(--panel); border-bottom: 1px solid var(--line);
+  }
+  header .brand { font-family: 'Sora', sans-serif; font-weight: 600; font-size: 1.15rem; }
+  header nav a { color: var(--ink-soft); text-decoration: none; font-size: 0.9rem; margin-left: 20px; }
+  header nav a:hover { color: var(--ink); }
+  main { max-width: 1080px; margin: 0 auto; padding: 40px 24px; }
+  main h1 { font-family: 'Sora', sans-serif; font-size: 1.6rem; margin: 0 0 6px; }
+  main .sub { color: var(--ink-soft); margin: 0 0 32px; }
+
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px; margin-bottom: 28px; }
+  .stat-card {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 20px 22px;
+  }
+  .stat-card .label { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.03em; color: var(--ink-soft); margin-bottom: 6px; }
+  .stat-card .value { font-family: 'Sora', sans-serif; font-size: 1.7rem; font-weight: 600; }
+
+  .charts { display: grid; grid-template-columns: 1fr; gap: 18px; margin-bottom: 28px; }
+  @media (min-width: 860px) { .charts { grid-template-columns: 1.3fr 1fr; } }
+  .chart-panel { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 20px 22px; }
+  .chart-panel h2 { font-family: 'Sora', sans-serif; font-size: 1rem; margin: 0 0 16px; }
+  .chart-panel canvas { max-height: 280px; }
+
+  .status-list { display: flex; gap: 10px; flex-wrap: wrap; }
+  .badge { padding: 5px 12px; border-radius: 12px; font-size: 0.82rem; font-weight: 600; color: #fff; }
+  .badge.pendente { background: var(--pendente); }
+  .badge.pago { background: var(--pago); }
+  .badge.cancelado { background: var(--cancelado); }
+
+  .empty, .loading { color: var(--ink-soft); padding: 40px 0; text-align: center; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">Conecta Empresas</div>
+  <nav>
+    <a href="/logado.html">Pacotes</a>
+    <a href="/pedidos.html">Meus Pedidos</a>
+    <a href="/dashboard.html">Dashboard</a>
+  </nav>
+</header>
+
+<main>
+  <h1>Dashboard de vendas</h1>
+  <p class="sub">Resumo consolidado dos pedidos.</p>
+  <div id="conteudo" class="loading">Carregando...</div>
+</main>
+
+<template id="template-conteudo">
+  <div class="cards">
+    <div class="stat-card">
+      <div class="label">Total vendido</div>
+      <div class="value" id="totalVendido">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Ticket médio</div>
+      <div class="value" id="ticketMedio">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Pedidos pagos</div>
+      <div class="value" id="pedidosPagos">—</div>
+    </div>
+  </div>
+
+  <div class="charts">
+    <div class="chart-panel">
+      <h2>Vendas por dia (últimos 30 dias)</h2>
+      <canvas id="graficoPorDia"></canvas>
+    </div>
+    <div class="chart-panel">
+      <h2>Vendas por pacote</h2>
+      <canvas id="graficoPorPacote"></canvas>
+    </div>
+  </div>
+
+  <div class="chart-panel">
+    <h2>Pedidos por status</h2>
+    <div class="status-list" id="statusList"></div>
+  </div>
+</template>
+
+<script>
+const CORES = ['#2F6F62', '#B08A2E', '#5B7FB3', '#B3432E', '#8A6FB3', '#3E8E7E'];
+
+function formatarMoeda(valor) {
+  return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+
+async function verificarAdmin() {
+  try {
+    const res = await fetch('/get-username');
+    if (!res.ok) { window.location.href = '/login.html'; return false; }
+    const data = await res.json();
+    if (!data.is_admin) { window.location.href = '/logado.html'; return false; }
+    return true;
+  } catch (e) {
+    window.location.href = '/login.html';
+    return false;
+  }
+}
+
+async function carregarDashboard() {
+  const container = document.getElementById('conteudo');
+  const permitido = await verificarAdmin();
+  if (!permitido) return;
+
+  try {
+    const res = await fetch('/admin/dashboard');
+    if (res.status === 403) { window.location.href = '/logado.html'; return; }
+    if (!res.ok) { container.textContent = 'Não foi possível carregar o dashboard.'; return; }
+
+    const dados = await res.json();
+
+    const template = document.getElementById('template-conteudo');
+    container.replaceWith(template.content.cloneNode(true));
+
+    document.getElementById('totalVendido').textContent = formatarMoeda(dados.total_vendido);
+    document.getElementById('ticketMedio').textContent = formatarMoeda(dados.ticket_medio);
+    document.getElementById('pedidosPagos').textContent = dados.pedidos_pagos;
+
+    const statusList = document.getElementById('statusList');
+    if (dados.resumo_por_status.length) {
+      statusList.innerHTML = dados.resumo_por_status.map(item => `
+        <span class="badge ${item.status}">${item.status}: ${item.quantidade} (${formatarMoeda(item.total)})</span>
+      `).join('');
+    } else {
+      statusList.textContent = 'Nenhum pedido registrado ainda.';
+    }
+
+    new Chart(document.getElementById('graficoPorDia'), {
+      type: 'line',
+      data: {
+        labels: dados.vendas_por_dia.map(item => item.data),
+        datasets: [{
+          label: 'Vendido (R$)',
+          data: dados.vendas_por_dia.map(item => item.total),
+          borderColor: '#2F6F62',
+          backgroundColor: 'rgba(47, 111, 98, 0.12)',
+          tension: 0.25,
+          fill: true,
+        }],
+      },
+      options: { responsive: true, plugins: { legend: { display: false } } },
+    });
+
+    new Chart(document.getElementById('graficoPorPacote'), {
+      type: 'bar',
+      data: {
+        labels: dados.vendas_por_pacote.map(item => item.pacote),
+        datasets: [{
+          label: 'Vendido (R$)',
+          data: dados.vendas_por_pacote.map(item => item.total),
+          backgroundColor: dados.vendas_por_pacote.map((_, i) => CORES[i % CORES.length]),
+        }],
+      },
+      options: { responsive: true, plugins: { legend: { display: false } } },
+    });
+  } catch (e) {
+    container.textContent = 'Não foi possível conectar ao servidor.';
+  }
+}
+
+carregarDashboard();
+</script>
+</body>
+</html>

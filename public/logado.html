@@ -72,6 +72,7 @@
 <header>
   <div class="brand">Conecta Empresas</div>
   <div class="user-area">
+    <a href="/dashboard.html" id="dashboardLink" style="display:none; color: var(--ink-soft); text-decoration: none; font-size: 0.9rem;">Dashboard</a>
     <a href="/pedidos.html" style="color: var(--ink-soft); text-decoration: none; font-size: 0.9rem;">Meus Pedidos</a>
     <div class="user-badge">
       <div class="avatar" id="avatarInitial">?</div>
@@ -95,6 +96,9 @@ async function carregarUsuario() {
     const data = await res.json();
     document.getElementById('usernameLabel').textContent = data.username;
     document.getElementById('avatarInitial').textContent = data.username.charAt(0).toUpperCase();
+    if (data.is_admin) {
+      document.getElementById('dashboardLink').style.display = 'inline';
+    }
   } catch (e) {
     window.location.href = '/login.html';
   }
