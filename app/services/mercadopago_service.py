@@ -2,11 +2,61 @@
 Integração com o Checkout Pro do Mercado Pago via API de Preferences.
 Docs: https://www.mercadopago.com.br/developers/pt/docs/checkout-pro/landing
 """
+import hashlib
+import hmac
+import logging
 import httpx
 from fastapi import HTTPException
 from app.core.config import settings
 
+logger = logging.getLogger("conecta.webhook")
+
 PREFERENCES_URL = "https://api.mercadopago.com/checkout/preferences"
+
+
+def validar_assinatura_webhook(x_signature: str | None, x_request_id: str | None, data_id: str) -> bool:
+    """
+    Valida a assinatura HMAC-SHA256 enviada pelo Mercado Pago no header
+    x-signature, conforme a documentação oficial:
+    https://www.mercadopago.com.br/developers/pt/docs/checkout-pro/additional-content/notifications/webhooks
+
+    Formato do header: "ts=<timestamp>,v1=<assinatura>"
+    manifest = "id:{data_id};request-id:{x_request_id};ts:{ts};"
+    assinatura esperada = HMAC-SHA256(manifest, PAYMENT_PROVIDER_WEBHOOK_SECRET)
+
+    NOTA: esta função estava referenciada em app/routers/pagamentos.py mas
+    não existia neste código-fonte -- implementada agora junto com os
+    testes automatizados do webhook.
+    """
+    if not settings.payment_provider_webhook_secret:
+        logger.warning("PAYMENT_PROVIDER_WEBHOOK_SECRET não configurado; rejeitando webhook.")
+        return False
+
+    if not x_signature:
+        return False
+
+    partes = dict(
+        parte.strip().split("=", 1)
+        for parte in x_signature.split(",")
+        if "=" in parte
+    )
+    ts = partes.get("ts")
+    v1 = partes.get("v1")
+    if not ts or not v1:
+        return False
+
+    manifest = f"id:{data_id.lower()};"
+    if x_request_id:
+        manifest += f"request-id:{x_request_id};"
+    manifest += f"ts:{ts};"
+
+    assinatura_calculada = hmac.new(
+        settings.payment_provider_webhook_secret.encode(),
+        manifest.encode(),
+        hashlib.sha256,
+    ).hexdigest()
+
+    return hmac.compare_digest(assinatura_calculada, v1)
 
 
 async def criar_ordem_de_pagamento(

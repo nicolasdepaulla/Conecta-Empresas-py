@@ -42,6 +42,11 @@ async def confirmar_pagamento_por_id(payment_id: str):
     """
     Chamado pelo webhook. Busca o pagamento no Mercado Pago pra descobrir
     qual pedido nosso ele representa (via external_reference) e o status real.
+
+    Trata dois casos que uma notificação de webhook pode disparar mais de
+    uma vez (retry do Mercado Pago) ou apontar para um pedido inválido:
+    - pedido_id que não existe na nossa base -> 404
+    - pedido que já está "pago" -> não reprocessa (idempotência)
     """
     pagamento = await mercadopago_service.buscar_pagamento_por_id(payment_id)
     pedido_id = pagamento.get("external_reference")
@@ -49,6 +54,13 @@ async def confirmar_pagamento_por_id(payment_id: str):
 
     if not pedido_id:
         raise HTTPException(status_code=400, detail="Pagamento sem external_reference.")
+
+    pedido = await pedido_repository.buscar_por_id(pedido_id)
+    if not pedido:
+        raise HTTPException(status_code=404, detail="Pedido não encontrado para este pagamento.")
+
+    if pedido.get("status") == "pago":
+        return {"success": True, "pedido_id": pedido_id, "status_mp": status_mp, "ja_processado": True}
 
     if status_mp == "approved":
         await pedido_repository.atualizar_status(pedido_id, "pago")
