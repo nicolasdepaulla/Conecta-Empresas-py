@@ -9,14 +9,25 @@ services:
       # Dentro do docker-compose, o Mongo roda no serviço "mongo", não em
       # localhost -- essa variável sobrescreve o que estiver no .env.
       MONGO_URI: mongodb://mongo:27017
+      # Idem pro Postgres (infra nova, migração em andamento -- convive com
+      # o Mongo até os repositories serem migrados um por um).
+      DATABASE_URL: postgresql+asyncpg://conecta:conecta@postgres:5432/conecta_empresas
     depends_on:
       mongo:
+        condition: service_healthy
+      postgres:
         condition: service_healthy
 
   mongo:
     image: mongo:7
     ports:
-      - "27018:27017" #era "27017:27017"
+      # Exposta em 27018 (não 27017) porque no Windows do Nick já existe um
+      # MongoDB nativo (usado pelo Kardex+) escutando em 27017 -- com as
+      # duas coisas na mesma porta, o Windows roteava as conexões vindas de
+      # scripts no host (fora do Docker) pro Mongo errado de forma
+      # inconsistente. Comunicação interna api<->mongo não muda (continua
+      # via mongo:27017 dentro da rede do compose).
+      - "27018:27017"
     volumes:
       - mongo_data:/data/db
     healthcheck:
@@ -26,5 +37,26 @@ services:
       retries: 10
       start_period: 10s
 
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: conecta
+      POSTGRES_PASSWORD: conecta
+      POSTGRES_DB: conecta_empresas
+    ports:
+      # 5433 (não 5432) por precaução -- a 27017 do Mongo já colidiu com um
+      # serviço nativo do Windows, então evitamos a porta "padrão" de novo
+      # pra quem já tiver um Postgres local instalado.
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U conecta -d conecta_empresas"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
 volumes:
   mongo_data:
+  postgres_data:

@@ -9,6 +9,10 @@ class Settings(BaseSettings):
     mongo_uri: str
     mongo_db_name: str = "conecta_empresas"
 
+    # Postgres -- infra nova, convivendo com o Mongo enquanto a migração
+    # avança repository por repository (ver issue de migração pro Postgres).
+    database_url: str = "postgresql+asyncpg://conecta:conecta@localhost:5433/conecta_empresas"
+
     jwt_secret_key: str
     jwt_algorithm: str = "HS256"
     jwt_expiration_minutes: int = 60
