@@ -14,6 +14,7 @@ sys.path.append(str(Path(__file__).resolve().parents[1]))
 
 from app.core.config import settings
 from app.core.postgres import Base
+from app import models_sql  # noqa: F401 -- registra os models em Base.metadata
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
