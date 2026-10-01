@@ -2,7 +2,7 @@ from fastapi import HTTPException
 import secrets
 import logging
 from datetime import datetime, timedelta, timezone
-from pymongo.errors import DuplicateKeyError
+from sqlalchemy.exc import IntegrityError
 from app.core.security import hash_password, verify_password, create_access_token
 from app.core.email import enviar_email_redefinicao_senha
 from app.core.config import settings
@@ -23,10 +23,11 @@ async def registrar(username: str, email: str, password: str):
     hashed = hash_password(password)
     try:
         await usuario_repository.criar_usuario(username, email, hashed)
-    except DuplicateKeyError:
-        # Segunda camada de proteção (índice único no Mongo), cobrindo a
-        # corrida entre duas requisições de cadastro simultâneas com o
-        # mesmo e-mail -- a checagem acima sozinha não é atômica.
+    except IntegrityError:
+        # Segunda camada de proteção (UNIQUE constraint no Postgres),
+        # cobrindo a corrida entre duas requisições de cadastro
+        # simultâneas com o mesmo e-mail -- a checagem acima sozinha não
+        # é atômica.
         raise HTTPException(status_code=409, detail="E-mail já cadastrado.")
 
     return {"success": True, "message": "Usuário cadastrado com sucesso!"}
