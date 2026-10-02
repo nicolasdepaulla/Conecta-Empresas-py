@@ -1,7 +1,7 @@
 """
-Popula o MongoDB com os dados reais extraídos do projeto Node.js original,
-substituindo os 9 arquivos HTML estáticos duplicados por documentos
-referenciados (pacotes -> sessoes).
+Popula o Postgres com os dados reais extraídos do projeto Node.js original,
+substituindo os 9 arquivos HTML estáticos duplicados por registros
+referenciados (pacotes -> sessoes, via FOREIGN KEY de verdade).
 
 Correções aplicadas em relação ao original:
 - Turismo/Petshop/Fitness tinham preço R$ 1000 mas apontavam pro checkout de
@@ -14,7 +14,11 @@ Correções aplicadas em relação ao original:
 Rodar com: python -m scripts.seed
 """
 import asyncio
-from app.core.database import pacotes_collection, sessoes_collection
+from sqlalchemy import delete
+from app.core.postgres import AsyncSessionLocal
+from app.models_sql.pacote import Pacote
+from app.models_sql.sessao import Sessao
+from app.repositories import pacote_repository, sessao_repository
 
 SESSAO_CONTATO_EMPRESARIAL = {
     "titulo": "Dados de Contato Empresarial",
@@ -44,15 +48,19 @@ PACOTES = [
 
 
 async def seed():
-    await pacotes_collection.delete_many({})
-    await sessoes_collection.delete_many({})
+    # Apaga na ordem que respeita a FK (pacotes referencia sessoes).
+    async with AsyncSessionLocal() as session:
+        await session.execute(delete(Pacote))
+        await session.execute(delete(Sessao))
+        await session.commit()
 
-    sessao_resultado = await sessoes_collection.insert_one(SESSAO_CONTATO_EMPRESARIAL)
-    sessao_id = str(sessao_resultado.inserted_id)
+    sessao_id = await sessao_repository.criar_sessao(
+        SESSAO_CONTATO_EMPRESARIAL["titulo"], SESSAO_CONTATO_EMPRESARIAL["itens"]
+    )
 
     for pacote in PACOTES:
         pacote["sessao_id"] = sessao_id
-        await pacotes_collection.insert_one(pacote)
+        await pacote_repository.criar_pacote(pacote)
 
     print(f"{len(PACOTES)} pacotes inseridos, referenciando 1 sessão compartilhada.")
 
