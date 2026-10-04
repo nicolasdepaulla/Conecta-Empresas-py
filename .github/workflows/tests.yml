@@ -10,11 +10,32 @@ jobs:
   testes:
     runs-on: ubuntu-latest
 
+    # Postgres real pro CI -- os testes em si usam mocks (não tocam no
+    # banco), mas o `alembic upgrade head` abaixo roda de verdade contra
+    # esse serviço, então uma migration quebrada é pega aqui, antes do
+    # push chegar no usuário (foi assim que o bug do Dockerfile que não
+    # copiava alembic.ini pra imagem passou batido até alguém notar manualmente).
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: conecta
+          POSTGRES_PASSWORD: conecta
+          POSTGRES_DB: conecta_empresas
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U conecta -d conecta_empresas"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
     env:
       # Valor fake -- os testes usam mocks e nunca conectam de verdade no
-      # Postgres ou no Mercado Pago, mas o Settings (pydantic) exige essa
-      # variável para a aplicação conseguir ser importada.
+      # Mercado Pago, mas o Settings (pydantic) exige essa variável para a
+      # aplicação conseguir ser importada.
       JWT_SECRET_KEY: chave-de-teste-usada-apenas-no-ci
+      DATABASE_URL: postgresql+asyncpg://conecta:conecta@localhost:5432/conecta_empresas
 
     steps:
       - name: Baixar o código
@@ -27,6 +48,9 @@ jobs:
 
       - name: Instalar dependências
         run: pip install -r requirements-dev.txt
+
+      - name: Aplicar as migrations no Postgres do CI
+        run: alembic upgrade head
 
       - name: Rodar os testes
         run: pytest -v
