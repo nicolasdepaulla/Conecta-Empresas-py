@@ -59,6 +59,20 @@ A API fica em `http://localhost:8000`. Os dados do Postgres persistem entre rein
 docker compose exec api python -m scripts.seed
 ```
 
+## Backup e restauração
+
+Backup do Postgres via `pg_dump`, no formato "custom" (já comprimido, permite restaurar tabela por tabela). Requer `pg_dump`/`pg_restore` instalados na máquina (rodar fora do Docker, contra a porta exposta em `DATABASE_URL`):
+
+```bash
+python -m scripts.backup
+```
+
+Gera um arquivo em `backups/backup_<banco>_<timestamp>.dump` (a pasta é ignorada pelo git — backup não é versionado). Para restaurar:
+
+```bash
+pg_restore -h localhost -p 5433 -U conecta -d conecta_empresas --clean --if-exists backups/arquivo.dump
+```
+
 ## Status do projeto
 
 🚧 Em desenvolvimento — migração ativa do backend original em Node.js/Express para Python/FastAPI.
@@ -79,9 +93,9 @@ docker compose exec api python -m scripts.seed
 - [x] Rate limiting (login e redefinição de senha)
 - [x] Dashboard administrativo de vendas
 - [x] Migração de MongoDB para PostgreSQL (SQLAlchemy async + Alembic)
+- [x] CI rodando um Postgres real (aplica as migrations a cada push)
+- [x] Backup do Postgres (`scripts/backup.py`, via `pg_dump`)
 - [ ] Deploy documentado (AWS/staging)
-- [ ] Backup automatizado do Postgres (`pg_dump`)
-- [ ] CI rodando um Postgres real (hoje os testes usam só mocks)
 
 ## Testes automatizados
 

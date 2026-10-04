@@ -14,3 +14,8 @@ __pycache__/
 
 .pytest_cache/
 .coverage
+
+# Backups do banco (gerados por scripts/backup.py) -- contêm dados reais,
+# não vão pro controle de versão.
+backups/*.dump
+backups/*.gz
