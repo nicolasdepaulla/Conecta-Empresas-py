@@ -5,7 +5,6 @@ from app.routers import usuarios, pacotes, pagamentos, admin
 from slowapi.errors import RateLimitExceeded
 from slowapi import _rate_limit_exceeded_handler
 from app.core.limiter import limiter
-from app.core.database import garantir_indices
 from app.core.config import settings
 
 # Em desenvolvimento os logs saem em DEBUG (mostra tudo, útil pra investigar
@@ -25,11 +24,9 @@ app.include_router(pacotes.router)
 app.include_router(pagamentos.router)
 app.include_router(admin.router)
 
-
-@app.on_event("startup")
-async def on_startup():
-    await garantir_indices()
-
+# O índice único de email (antes criado no startup, via garantir_indices())
+# agora é a constraint UNIQUE da coluna usuarios.email no Postgres -- não
+# precisa de nenhum passo de inicialização pra isso.
 
 # Serve o front-end (equivalente ao express.static('public') do projeto original)
 app.mount("/", StaticFiles(directory="public", html=True), name="public")

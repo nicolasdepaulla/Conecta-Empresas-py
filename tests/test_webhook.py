@@ -19,8 +19,6 @@ from app.main import app
 from app.core.config import settings
 from app.services import mercadopago_service, pedido_service
 
-# Sem `with`, o TestClient não dispara o evento de startup (que tentaria
-# conectar num Mongo real) -- só processa as requisições feitas nele.
 client = TestClient(app)
 
 

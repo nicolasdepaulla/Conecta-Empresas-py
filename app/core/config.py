@@ -6,11 +6,8 @@ class Settings(BaseSettings):
     # ambiente, como o atributo `secure` do cookie de autenticação.
     ambiente: str = "development"
 
-    mongo_uri: str
-    mongo_db_name: str = "conecta_empresas"
-
-    # Postgres -- infra nova, convivendo com o Mongo enquanto a migração
-    # avança repository por repository (ver issue de migração pro Postgres).
+    # Postgres -- banco único da aplicação (migração de MongoDB concluída:
+    # os 4 repositories, usuario/sessao/pacote/pedido, já usam este banco).
     database_url: str = "postgresql+asyncpg://conecta:conecta@localhost:5433/conecta_empresas"
 
     jwt_secret_key: str

@@ -7,7 +7,7 @@ Sistema de venda de pacotes de dados personalizados para consórcios, com foco e
 ## Stack
 
 - **FastAPI** — framework web assíncrono, com documentação automática (Swagger/OpenAPI)
-- **MongoDB** (via Motor, driver assíncrono) — persistência de dados
+- **PostgreSQL** (via SQLAlchemy 2.0 async + asyncpg) — persistência de dados, com migrações versionadas via **Alembic**
 - **JWT + bcrypt** — autenticação e hash de senhas
 - **Pydantic** — validação de dados e schemas
 
@@ -28,7 +28,7 @@ app/
 
 ## Modelagem de dados
 
-Para evitar repetição de conteúdo entre pacotes (problema presente na versão anterior), as seções de conteúdo dos pacotes foram extraídas para uma collection própria (`sessoes`), referenciada pelos pacotes em vez de embutida — o equivalente, no MongoDB, a uma normalização de dados relacional. Junções são feitas via `$lookup` na aggregation pipeline.
+Para evitar repetição de conteúdo entre pacotes (problema presente na versão anterior), as seções de conteúdo dos pacotes foram extraídas para uma tabela própria (`sessoes`), referenciada pelos pacotes via `FOREIGN KEY` (`pacotes.sessao_id`) em vez de duplicada. Pedidos também referenciam `usuarios` e `pacotes` por FK, mas guardam `pacote_nome`/`valor` como "retrato" (snapshot) do momento da compra, pra não mudar de cara se o pacote for renomeado ou tiver o preço alterado depois. O status do pedido é um `ENUM` nativo do Postgres (`pendente`/`pago`/`cancelado`), rejeitado pelo banco se vier qualquer outro valor.
 
 ## Como rodar localmente
 
@@ -37,6 +37,7 @@ python -m venv venv
 source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 cp .env.example .env      # preencher com suas credenciais
+alembic upgrade head      # cria as tabelas no Postgres
 uvicorn app.main:app --reload
 ```
 
@@ -44,14 +45,15 @@ A documentação interativa da API fica disponível em `http://localhost:8000/do
 
 ## Rodando com Docker
 
-Sobe a API e um MongoDB juntos, sem precisar instalar Python nem Mongo na máquina:
+Sobe a API e um Postgres juntos, sem precisar instalar Python nem Postgres na máquina:
 
 ```bash
-cp .env.example .env   # preencher JWT_SECRET_KEY (o MONGO_URI é sobrescrito automaticamente)
+cp .env.example .env   # preencher JWT_SECRET_KEY (o DATABASE_URL é sobrescrito automaticamente)
 docker compose up --build
+docker compose exec api alembic upgrade head   # cria as tabelas, só na primeira vez
 ```
 
-A API fica em `http://localhost:8000`. Os dados do Mongo persistem entre reinicializações (volume `mongo_data`). Para popular os pacotes:
+A API fica em `http://localhost:8000`. Os dados do Postgres persistem entre reinicializações (volume `postgres_data`). Para popular os pacotes:
 
 ```bash
 docker compose exec api python -m scripts.seed
@@ -64,23 +66,26 @@ docker compose exec api python -m scripts.seed
 ## Roadmap
 
 - [x] Definição da arquitetura em camadas
-- [x] Modelagem das collections `pacotes` e `sessoes`
+- [x] Modelagem das tabelas `pacotes` e `sessoes`
 - [x] Autenticação (JWT + bcrypt, cookie httpOnly)
-- [x] Listagem/consulta de pacotes com sessão resolvida via `$lookup`
+- [x] Listagem/consulta de pacotes com sessão resolvida via `JOIN`
 - [x] Script de seed com os dados reais migrados do projeto original
 - [x] Migração do front-end (login, cadastro, listagem de pacotes, meus pedidos)
 - [x] Integração de pagamento real (Mercado Pago Checkout Pro)
 - [x] Testes automatizados
 - [x] CI (GitHub Actions rodando os testes a cada push)
-- [x] Dockerização (Dockerfile + docker-compose com Mongo)
+- [x] Dockerização (Dockerfile + docker-compose)
 - [x] Redefinição de senha por e-mail
 - [x] Rate limiting (login e redefinição de senha)
-- [ ] Dashboard administrativo de vendas
+- [x] Dashboard administrativo de vendas
+- [x] Migração de MongoDB para PostgreSQL (SQLAlchemy async + Alembic)
 - [ ] Deploy documentado (AWS/staging)
+- [ ] Backup automatizado do Postgres (`pg_dump`)
+- [ ] CI rodando um Postgres real (hoje os testes usam só mocks)
 
 ## Testes automatizados
 
-Os testes usam `pytest` + `pytest-asyncio` e não dependem de um MongoDB real
+Os testes usam `pytest` + `pytest-asyncio` e não dependem de um Postgres real
 nem do Mercado Pago de verdade — toda chamada externa é simulada, então
 rodam rápido e sem precisar de `.env` configurado.
 
