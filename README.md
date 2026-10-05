@@ -75,7 +75,7 @@ pg_restore -h localhost -p 5433 -U conecta -d conecta_empresas --clean --if-exis
 
 ## Status do projeto
 
-🚧 Em desenvolvimento — migração ativa do backend original em Node.js/Express para Python/FastAPI.
+✅ Reescrita do backend original (Node.js/Express) em Python/FastAPI concluída, incluindo a migração de persistência de MongoDB para PostgreSQL. Veja o roadmap abaixo para o que já foi feito.
 
 ## Roadmap
 
@@ -95,7 +95,7 @@ pg_restore -h localhost -p 5433 -U conecta -d conecta_empresas --clean --if-exis
 - [x] Migração de MongoDB para PostgreSQL (SQLAlchemy async + Alembic)
 - [x] CI rodando um Postgres real (aplica as migrations a cada push)
 - [x] Backup do Postgres (`scripts/backup.py`, via `pg_dump`)
-- [ ] Deploy documentado (AWS/staging)
+- [x] Deploy documentado ([`docs/DEPLOY.md`](docs/DEPLOY.md), EC2 + Docker Compose)
 
 ## Testes automatizados
 
