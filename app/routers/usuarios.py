@@ -25,6 +25,7 @@ async def login(request: Request, dados: UsuarioLogin, response: Response):
         value=token,
         httponly=True,
         secure=settings.is_production,
+        samesite="lax",
         max_age=3600,
     )
     return {"success": True, "message": "Login realizado com sucesso."}
@@ -32,7 +33,9 @@ async def login(request: Request, dados: UsuarioLogin, response: Response):
 
 @router.post("/logout")
 async def logout(response: Response):
-    response.delete_cookie("authToken")
+    # secure/samesite precisam bater com os usados no set_cookie do login,
+    # senão alguns navegadores não reconhecem como o mesmo cookie e não apagam.
+    response.delete_cookie("authToken", secure=settings.is_production, samesite="lax")
     return {"success": True, "message": "Logout realizado."}
 
 

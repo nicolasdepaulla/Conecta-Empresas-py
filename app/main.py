@@ -5,6 +5,7 @@ from app.routers import usuarios, pacotes, pagamentos, admin
 from slowapi.errors import RateLimitExceeded
 from slowapi import _rate_limit_exceeded_handler
 from app.core.limiter import limiter
+from app.core.security_headers import SecurityHeadersMiddleware
 from app.core.config import settings
 
 # Em desenvolvimento os logs saem em DEBUG (mostra tudo, útil pra investigar
@@ -17,6 +18,7 @@ logging.basicConfig(
 
 app = FastAPI(title="Conecta Empresas API")
 
+app.add_middleware(SecurityHeadersMiddleware)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.include_router(usuarios.router)

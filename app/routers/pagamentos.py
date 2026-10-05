@@ -21,7 +21,10 @@ async def webhook_pagamento(payload: dict, request: Request):
     Para o Checkout Pro (Preferences), a notificação vem no formato:
     {"type": "payment", "data": {"id": "<payment_id>"}}
     """
-    logger.info("Webhook recebido: %s", payload)
+    # Loga só os campos que a aplicação de fato usa, não o payload inteiro
+    # -- o Checkout Pro não manda dado de cartão aqui, mas não custa evitar
+    # logar um payload bruto de terceiro inteiro caso o formato mude um dia.
+    logger.info("Webhook recebido: type=%s data.id=%s", payload.get("type"), (payload.get("data") or {}).get("id"))
 
     if payload.get("type") != "payment":
         return {"ignored": True, "reason": "evento não é de pagamento"}
