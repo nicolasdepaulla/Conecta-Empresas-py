@@ -116,18 +116,48 @@ async function carregarPacotes() {
       return;
     }
 
+    // Monta os cards via DOM (não com innerHTML + template string) --
+    // setor/nome vêm do cadastro de pacotes e, se algum dia um admin
+    // conseguir cadastrar isso por um formulário em vez de só pelo script
+    // de seed, um nome com HTML/JS dentro não vira código executado na
+    // página de quem só está navegando. textContent sempre escapa.
     container.className = 'grid';
-    container.innerHTML = pacotes.map(p => `
-      <div class="card">
-        <span class="setor">${p.setor}</span>
-        <h3>${p.nome}</h3>
-        <div class="preco">R$ ${p.preco.toFixed(2)} <small>/ ${p.quantidade_contatos} contatos</small></div>
-        <ul>
-          ${p.sessao.itens.map(item => `<li>${item}</li>`).join('')}
-        </ul>
-        <button onclick="finalizarPagamento('${p.slug}')">Finalizar Pagamento</button>
-      </div>
-    `).join('');
+    container.innerHTML = '';
+
+    pacotes.forEach(p => {
+      const card = document.createElement('div');
+      card.className = 'card';
+
+      const setor = document.createElement('span');
+      setor.className = 'setor';
+      setor.textContent = p.setor;
+
+      const nome = document.createElement('h3');
+      nome.textContent = p.nome;
+
+      const preco = document.createElement('div');
+      preco.className = 'preco';
+      const small = document.createElement('small');
+      small.textContent = `/ ${p.quantidade_contatos} contatos`;
+      preco.append(`R$ ${p.preco.toFixed(2)} `, small);
+
+      const lista = document.createElement('ul');
+      p.sessao.itens.forEach(item => {
+        const li = document.createElement('li');
+        li.textContent = item;
+        lista.appendChild(li);
+      });
+
+      const botao = document.createElement('button');
+      botao.textContent = 'Finalizar Pagamento';
+      // addEventListener em vez de onclick="...('${p.slug}')": o slug vira
+      // um valor de JS de verdade, nunca passa pelo parser de HTML, então
+      // nem precisa escapar.
+      botao.addEventListener('click', () => finalizarPagamento(p.slug));
+
+      card.append(setor, nome, preco, lista, botao);
+      container.appendChild(card);
+    });
   } catch (e) {
     container.textContent = 'Não foi possível conectar ao servidor.';
   }
