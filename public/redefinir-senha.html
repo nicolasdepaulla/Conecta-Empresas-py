@@ -74,6 +74,7 @@
     <p class="foot"><a href="/login.html">Voltar para o login</a></p>
   </div>
 
+<script src="/js/erros.js"></script>
 <script>
 function alternarVisibilidadeSenha(inputId, botao) {
   const input = document.getElementById(inputId);
@@ -124,7 +125,7 @@ document.getElementById('redefinirForm').addEventListener('submit', async functi
       setTimeout(() => { window.location.href = '/login.html'; }, 1500);
     } else {
       const data = await response.json().catch(() => ({}));
-      errorBox.textContent = data.detail || 'Não foi possível redefinir a senha.';
+      errorBox.textContent = extrairMensagemDeErro(data, 'Não foi possível redefinir a senha.');
       errorBox.style.display = 'block';
       btn.disabled = false;
       btn.textContent = 'Redefinir senha';

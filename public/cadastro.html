@@ -294,6 +294,7 @@
     </div>
   </div>
 
+  <script src="/js/erros.js"></script>
   <script>
     function alternarVisibilidadeSenha(inputId, botao) {
       const input = document.getElementById(inputId);
@@ -332,7 +333,7 @@
           setTimeout(() => { window.location.href = '/login.html'; }, 1200);
         } else {
           const data = await response.json().catch(() => ({}));
-          errorBox.textContent = data.detail || 'Não foi possível criar a conta.';
+          errorBox.textContent = extrairMensagemDeErro(data, 'Não foi possível criar a conta.');
           errorBox.style.display = 'block';
           btn.disabled = false;
           btn.textContent = 'Criar conta';

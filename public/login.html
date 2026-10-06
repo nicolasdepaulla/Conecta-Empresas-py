@@ -213,6 +213,7 @@
     </div>
   </div>
 
+<script src="/js/erros.js"></script>
 <script>
 function alternarVisibilidadeSenha(inputId, botao) {
   const input = document.getElementById(inputId);
@@ -243,7 +244,7 @@ document.getElementById('loginForm').addEventListener('submit', async function (
       window.location.href = '/logado.html';
     } else {
       const data = await response.json().catch(() => ({}));
-      errorBox.textContent = data.detail || 'Usuário ou senha inválidos.';
+      errorBox.textContent = extrairMensagemDeErro(data, 'Usuário ou senha inválidos.');
       errorBox.style.display = 'block';
     }
   } catch (err) {
