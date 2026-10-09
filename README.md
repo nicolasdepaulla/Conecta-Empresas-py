@@ -97,6 +97,12 @@ pg_restore -h localhost -p 5433 -U conecta -d conecta_empresas --clean --if-exis
 - [x] Backup do Postgres (`scripts/backup.py`, via `pg_dump`)
 - [x] Deploy documentado ([`docs/DEPLOY.md`](docs/DEPLOY.md), EC2 + Docker Compose)
 
+## Limitações conhecidas (decisões conscientes, não esquecimento)
+
+- **Rate limiting é só por IP, não por usuário.** O `slowapi` (login, cadastro, redefinição de senha) limita tentativas por IP de origem -- um ataque de força bruta contra uma conta específica vindo de vários IPs diferentes não é pego por esse limite. Daria pra adicionar um limite por `username` também, mas exige uma lógica própria (o `slowapi`, do jeito que está configurado, decide o limite antes do corpo da requisição ser lido). Fica registrado como melhoria futura -- o risco é baixo pro tamanho atual do projeto (poucos usuários, não é um alvo de alto valor), e a validação viria de um teste automatizado (chamar `/login` repetidas vezes com o mesmo usuário e IPs forjados), não de um ataque real.
+- **Sem Content-Security-Policy.** As páginas em `public/` usam `<script>` inline, o que impede uma CSP restritiva sem antes mover esses scripts pra arquivos `.js` separados.
+- **Sem autenticação de dois fatores.** Decisão consciente por enquanto -- sem um serviço de e-mail configurado de verdade em desenvolvimento (o link de redefinição de senha só aparece no terminal hoje), não dá pra validar o fluxo de 2FA por e-mail de ponta a ponta.
+
 ## Testes automatizados
 
 Os testes usam `pytest` + `pytest-asyncio` e não dependem de um Postgres real

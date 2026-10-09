@@ -35,16 +35,6 @@
       grid-template-columns: 1.1fr 1fr;
     }
 
-    @media (max-width: 860px) {
-      body {
-        grid-template-columns: 1fr;
-      }
-
-      .side {
-        display: none;
-      }
-    }
-
     .side {
       background: var(--ink);
       color: #F1EFEA;
@@ -107,6 +97,19 @@
       border: 1px solid rgba(255, 255, 255, 0.2);
       border-radius: 3px;
       color: #D8D4CB;
+    }
+
+    /* Precisa vir DEPOIS da regra ".side" incondicional acima (ver nota
+       equivalente em login.html): a ordem no CSS decide o empate de
+       especificidade, mesmo dentro de uma @media que já bate com o viewport. */
+    @media (max-width: 860px) {
+      body {
+        grid-template-columns: 1fr;
+      }
+
+      .side {
+        display: none;
+      }
     }
 
     .form-area {
@@ -284,7 +287,7 @@
         </div>
         <div class="hint">Mínimo de 6 caracteres.</div>
 
-        <div class="msg error" id="errorMsg"></div>
+        <div class="msg" id="errorMsg"></div>
         <div class="msg ok" id="okMsg"></div>
 
         <button type="submit" class="primary" id="submitBtn">Criar conta</button>

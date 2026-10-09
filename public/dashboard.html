@@ -46,6 +46,22 @@
   .badge.cancelado { background: var(--cancelado); }
 
   .empty, .loading { color: var(--ink-soft); padding: 40px 0; text-align: center; }
+
+  @media (max-width: 640px) {
+    header {
+      flex-wrap: wrap;
+      row-gap: 8px;
+      padding: 14px 20px;
+    }
+    header nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 16px;
+      width: 100%;
+    }
+    header nav a { margin-left: 0; }
+    main { padding: 28px 18px; }
+  }
 </style>
 </head>
 <body>
